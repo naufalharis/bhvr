@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import Login from "./components/Login"; // buat komponen Login
+import Login from "./components/Login";
 import Home from "./components/Home"; // buat komponen Home
 import "./index.css";
 
