@@ -1,0 +1,340 @@
+/* Modern Sky Blue Theme Login Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(135deg, #87CEEB 0%, #E0F6FF 50%, #B0E0E6 100%);
+    min-height: 100vh;
+    color: #1e293b;
+  }
+  
+  /* Header Styles */
+  header {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(135, 206, 235, 0.2);
+    padding: 1rem 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  
+  header > div {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 2rem;
+  }
+  
+  header a {
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  
+  header svg {
+    width: 40px;
+    height: 40px;
+    color: #0ea5e9;
+  }
+  
+  header h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #0f172a;
+  }
+  
+  nav {
+    display: flex;
+    gap: 2rem;
+  }
+  
+  nav a {
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+  }
+  
+  nav a:hover {
+    background: rgba(135, 206, 235, 0.1);
+    color: #0ea5e9;
+  }
+  
+  header > div > div:last-child {
+    display: flex;
+    gap: 1rem;
+  }
+  
+  header > div > div:last-child a:first-child {
+    color: #64748b;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+  }
+  
+  header > div > div:last-child a:first-child:hover {
+    color: #0ea5e9;
+    background: rgba(135, 206, 235, 0.1);
+  }
+  
+  header > div > div:last-child a:last-child {
+    background: linear-gradient(135deg, #0ea5e9, #38bdf8);
+    color: white;
+    padding: 0.5rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+  }
+  
+  header > div > div:last-child a:last-child:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(14, 165, 233, 0.4);
+  }
+  
+  /* Main Content */
+  main {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 80px);
+    padding: 2rem;
+  }
+  
+  main > div {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+    padding: 3rem;
+    width: 100%;
+    max-width: 450px;
+    border: 1px solid rgba(135, 206, 235, 0.2);
+  }
+  
+  main > div > div:first-child {
+    text-align: center;
+    margin-bottom: 2.5rem;
+  }
+  
+  main h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 0.5rem;
+  }
+  
+  main > div > div:first-child p {
+    color: #64748b;
+    font-size: 1rem;
+  }
+  
+  /* Form Styles */
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  
+  form > div {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  form > div:nth-child(2) > div:first-child {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  label {
+    font-weight: 600;
+    color: #374151;
+    font-size: 0.875rem;
+  }
+  
+  input {
+    padding: 0.875rem 1rem;
+    border: 2px solid rgba(135, 206, 235, 0.3);
+    border-radius: 12px;
+    font-size: 1rem;
+    background: rgba(255, 255, 255, 0.8);
+    transition: all 0.3s ease;
+    outline: none;
+  }
+  
+  input:focus {
+    border-color: #0ea5e9;
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+    background: white;
+  }
+  
+  input::placeholder {
+    color: #9ca3af;
+  }
+  
+  /* Forgot Password Link */
+  form > div:nth-child(2) > div:first-child a {
+    color: #0ea5e9;
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: color 0.3s ease;
+  }
+  
+  form > div:nth-child(2) > div:first-child a:hover {
+    color: #0284c7;
+  }
+  
+  /* Login Button */
+  form button {
+    background: linear-gradient(135deg, #0ea5e9, #38bdf8);
+    color: white;
+    border: none;
+    padding: 1rem;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 6px 20px rgba(14, 165, 233, 0.3);
+  }
+  
+  form button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(14, 165, 233, 0.4);
+  }
+  
+  form button:active {
+    transform: translateY(0);
+  }
+  
+  /* Divider */
+  form + div {
+    margin: 2rem 0 1.5rem 0;
+    position: relative;
+  }
+  
+  form + div > div:first-child {
+    height: 1px;
+    background: rgba(135, 206, 235, 0.3);
+  }
+  
+  form + div > div:last-child {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255, 255, 255, 0.95);
+    padding: 0 1rem;
+  }
+  
+  form + div span {
+    color: #64748b;
+    font-size: 0.875rem;
+  }
+  
+  /* Social Buttons */
+  form + div + div {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  form + div + div button {
+    padding: 0.875rem;
+    border: 2px solid rgba(135, 206, 235, 0.3);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.8);
+    color: #374151;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  
+  form + div + div button:hover {
+    border-color: #0ea5e9;
+    background: rgba(14, 165, 233, 0.05);
+    transform: translateY(-1px);
+  }
+  
+  /* Sign Up Link */
+  main p {
+    text-align: center;
+    color: #64748b;
+    font-size: 0.875rem;
+  }
+  
+  main p a {
+    color: #0ea5e9;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.3s ease;
+  }
+  
+  main p a:hover {
+    color: #0284c7;
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    header > div {
+      padding: 0 1rem;
+    }
+    
+    nav {
+      display: none;
+    }
+    
+    main {
+      padding: 1rem;
+    }
+    
+    main > div {
+      padding: 2rem 1.5rem;
+    }
+    
+    main h1 {
+      font-size: 1.75rem;
+    }
+    
+    form + div + div {
+      grid-template-columns: 1fr;
+    }
+  }
+  
+  /* Smooth animations */
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  main > div {
+    animation: fadeInUp 0.6s ease-out;
+  }
+  
+  /* Focus states for accessibility */
+  button:focus-visible,
+  input:focus-visible,
+  a:focus-visible {
+    outline: 2px solid #0ea5e9;
+    outline-offset: 2px;
+  }
