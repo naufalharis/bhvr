@@ -1,7 +1,16 @@
 import { useState } from "react";
 import "../App.css";
 
-export default function Login() {
+interface Props {
+  onLogin: () => void;
+}
+
+export default function Login({ onLogin }: Props) {
+  const handleLogin = () => {
+    // TODO: ganti dengan API login jika ada
+    onLogin(); // set state isLoggedIn true → redirect otomatis
+  };
+  
   return (
     <div
       className="text-gray-900"
