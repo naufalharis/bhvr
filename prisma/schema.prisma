@@ -8,7 +8,7 @@ datasource db {
   provider = "postgresql" // ganti sesuai DB kamu
   url      = env("DATABASE_URL")
 }
-//nopal//
+
 // ENUM
 enum CourseType {
   single
