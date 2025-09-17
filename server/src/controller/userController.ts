@@ -3,6 +3,8 @@ import { PrismaClient } from "@prisma/client";
 import type { Context as HonoContext } from "hono";
 import bcrypt from "bcryptjs";
 
+//nopal//
+
 const prisma = new PrismaClient();
 
 export const createUser = async (c: HonoContext) => {
