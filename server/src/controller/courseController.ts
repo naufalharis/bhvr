@@ -1,11 +1,12 @@
 // src/controllers/courseController.ts
 import { PrismaClient, CourseType, ContentType } from "@prisma/client";
 import type { Context as HonoContext } from "hono";
+import type { Context } from "hono";
 
 const prisma = new PrismaClient();
 
 // =======================
-// Create Course
+//  Course
 // =======================
 export const createCourse = async (c: HonoContext) => {
   try {
@@ -34,6 +35,67 @@ export const createCourse = async (c: HonoContext) => {
     console.error("createCourse error:", error);
     return c.json({ error: error.message }, 500);
   }
+};
+
+export const getCourses = async (c: Context) => {
+  const user = c.get("user");
+  if (!user || user.role !== "instructor") return c.json({ error: "Unauthorized" }, 401);
+
+  const instructor = await prisma.instructor.findUnique({ where: { user_id: user.id } });
+  if (!instructor) return c.json({ error: "Instructor not found" }, 404);
+
+  const courses = await prisma.course.findMany({
+    where: { instructor_id: instructor.id },
+    include: { chapters: true },
+  });
+  return c.json(courses);
+};
+
+export const updateCourse = async (c: Context) => {
+  const user = c.get("user");
+  if (!user || user.role !== "instructor") return c.json({ error: "Unauthorized" }, 401);
+
+  const courseId = c.req.param("courseId");
+  const body = await c.req.json();
+
+  const course = await prisma.course.findUnique({ where: { id: courseId } });
+  if (!course) return c.json({ error: "Course not found" }, 404);
+
+  // Pastikan course ini milik instructor yang login
+  const instructor = await prisma.instructor.findUnique({ where: { user_id: user.id } });
+  if (course.instructor_id !== instructor?.id) {
+    return c.json({ error: "Forbidden" }, 403);
+  }
+
+  const updated = await prisma.course.update({
+    where: { id: courseId },
+    data: {
+      title: body.title,
+      overview: body.overview,
+      cover: body.cover,
+      course_type: body.course_type,
+    },
+  });
+
+  return c.json(updated);
+};
+
+export const deleteCourse = async (c: Context) => {
+  const user = c.get("user");
+  if (!user || user.role !== "instructor") return c.json({ error: "Unauthorized" }, 401);
+
+  const courseId = c.req.param("courseId");
+
+  const course = await prisma.course.findUnique({ where: { id: courseId } });
+  if (!course) return c.json({ error: "Course not found" }, 404);
+
+  const instructor = await prisma.instructor.findUnique({ where: { user_id: user.id } });
+  if (course.instructor_id !== instructor?.id) {
+    return c.json({ error: "Forbidden" }, 403);
+  }
+
+  await prisma.course.delete({ where: { id: courseId } });
+  return c.json({ message: "Course deleted successfully" });
 };
 
 // =======================
@@ -73,6 +135,53 @@ export const addChapter = async (c: HonoContext) => {
     console.error("addChapter error:", error);
     return c.json({ error: error.message }, 500);
   }
+};
+
+export const getChapters = async (c: Context) => {
+  const courseId = c.req.param("courseId");
+  const chapters = await prisma.courseChapter.findMany({ where: { course_id: courseId } });
+  return c.json(chapters);
+};
+
+export const updateChapter = async (c: Context) => {
+  const chapterId = c.req.param("chapterId");
+  const body = await c.req.json();
+
+  const chapter = await prisma.courseChapter.findUnique({ where: { id: chapterId }, include: { course: true } });
+  if (!chapter) return c.json({ error: "Chapter not found" }, 404);
+
+  const user = c.get("user");
+  const instructor = await prisma.instructor.findUnique({ where: { user_id: user.id } });
+  if (chapter.course.instructor_id !== instructor?.id) {
+    return c.json({ error: "Forbidden" }, 403);
+  }
+
+  const updated = await prisma.courseChapter.update({
+    where: { id: chapterId },
+    data: {
+      title: body.title,
+      overview: body.overview,
+      cover: body.cover,
+      sort_order: body.sort_order,
+    },
+  });
+  return c.json(updated);
+};
+
+export const deleteChapter = async (c: Context) => {
+  const chapterId = c.req.param("chapterId");
+
+  const chapter = await prisma.courseChapter.findUnique({ where: { id: chapterId }, include: { course: true } });
+  if (!chapter) return c.json({ error: "Chapter not found" }, 404);
+
+  const user = c.get("user");
+  const instructor = await prisma.instructor.findUnique({ where: { user_id: user.id } });
+  if (chapter.course.instructor_id !== instructor?.id) {
+    return c.json({ error: "Forbidden" }, 403);
+  }
+
+  await prisma.courseChapter.delete({ where: { id: chapterId } });
+  return c.json({ message: "Chapter deleted successfully" });
 };
 
 // =======================
@@ -116,4 +225,60 @@ export const addChapterContent = async (c: HonoContext) => {
     console.error("addChapterContent error:", error);
     return c.json({ error: error.message }, 500);
   }
+};
+
+export const getContents = async (c: Context) => {
+  const chapterId = c.req.param("chapterId");
+  const contents = await prisma.courseChapterContent.findMany({ where: { chapter_id: chapterId } });
+  return c.json(contents);
+};
+
+export const updateContent = async (c: Context) => {
+  const contentId = c.req.param("contentId");
+  const body = await c.req.json();
+
+  const content = await prisma.courseChapterContent.findUnique({
+    where: { id: contentId },
+    include: { chapter: { include: { course: true } } },
+  });
+  if (!content) return c.json({ error: "Content not found" }, 404);
+
+  const user = c.get("user");
+  const instructor = await prisma.instructor.findUnique({ where: { user_id: user.id } });
+  if (content.chapter.course.instructor_id !== instructor?.id) {
+    return c.json({ error: "Forbidden" }, 403);
+  }
+
+  const updated = await prisma.courseChapterContent.update({
+    where: { id: contentId },
+    data: {
+      title: body.title,
+      overview: body.overview,
+      cover: body.cover,
+      content_type: body.content_type,
+      sort_order: body.sort_order,
+      path: body.path,
+      original_file_name: body.original_file_name,
+    },
+  });
+  return c.json(updated);
+};
+
+export const deleteContent = async (c: Context) => {
+  const contentId = c.req.param("contentId");
+
+  const content = await prisma.courseChapterContent.findUnique({
+    where: { id: contentId },
+    include: { chapter: { include: { course: true } } },
+  });
+  if (!content) return c.json({ error: "Content not found" }, 404);
+
+  const user = c.get("user");
+  const instructor = await prisma.instructor.findUnique({ where: { user_id: user.id } });
+  if (content.chapter.course.instructor_id !== instructor?.id) {
+    return c.json({ error: "Forbidden" }, 403);
+  }
+
+  await prisma.courseChapterContent.delete({ where: { id: contentId } });
+  return c.json({ message: "Content deleted successfully" });
 };
