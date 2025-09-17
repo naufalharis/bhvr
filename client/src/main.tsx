@@ -2,9 +2,8 @@
 import React, { useState, useEffect } from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import Login from "./components/login";
+import Login from "./components/Login";
 import Home from "./components/Home";
-import "./index.css";
 
 function App() {
   // Ambil status login dari localStorage
