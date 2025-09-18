@@ -2,13 +2,15 @@
 import { Hono } from 'hono'
 import { createUser } from './controller/userController'
 import { loginUser } from './controller/loginController'
-import { getCourses, createCourse, updateCourse, deleteCourse,
+import { 
+     getCourses, createCourse, updateCourse, deleteCourse,
      getChapters, addChapter, updateChapter, deleteChapter,
-     getContents, addChapterContent, updateContent, deleteContent
-     } from './controller/courseController'
+     getContents, addChapterContent, updateContent, deleteContent } from './controller/courseController'
 import { authMiddleware } from "./middleware/authMiddleware";
+import courseCategory from './controller/courseCategoryController'
 
 const app = new Hono()
+app.route("/api/course-categories", courseCategory);
 
 app.get('/', (c) => c.text('Hello from Hono + Bun!'))
 app.post('/users', createUser) // langsung pakai handler Hono

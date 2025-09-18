@@ -53,15 +53,17 @@ export const getCourses = async (c: Context) => {
 
 export const updateCourse = async (c: Context) => {
   const user = c.get("user");
-  if (!user || user.role !== "instructor") return c.json({ error: "Unauthorized" }, 401);
+  if (!user || user.role !== "instructor") {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
 
-  const courseId = c.req.param("courseId");
+  const courseId = c.req.param("id"); // ⬅️ ganti ke "id"
   const body = await c.req.json();
 
   const course = await prisma.course.findUnique({ where: { id: courseId } });
   if (!course) return c.json({ error: "Course not found" }, 404);
 
-  // Pastikan course ini milik instructor yang login
+  // pastikan course milik instructor
   const instructor = await prisma.instructor.findUnique({ where: { user_id: user.id } });
   if (course.instructor_id !== instructor?.id) {
     return c.json({ error: "Forbidden" }, 403);
@@ -82,9 +84,11 @@ export const updateCourse = async (c: Context) => {
 
 export const deleteCourse = async (c: Context) => {
   const user = c.get("user");
-  if (!user || user.role !== "instructor") return c.json({ error: "Unauthorized" }, 401);
+  if (!user || user.role !== "instructor") {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
 
-  const courseId = c.req.param("courseId");
+  const courseId = c.req.param("id"); // ⬅️ ganti ke "id"
 
   const course = await prisma.course.findUnique({ where: { id: courseId } });
   if (!course) return c.json({ error: "Course not found" }, 404);
