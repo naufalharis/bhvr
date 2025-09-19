@@ -4,24 +4,14 @@
             box-sizing: border-box;
         }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #87CEEB 0%, #B0E0E6 50%, #E0F6FF 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
         .register-container {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             border-radius: 20px;
             box-shadow: 0 20px 40px rgba(135, 206, 235, 0.3);
             padding: 40px;
-            width: 100%;
-            max-width: 600px;
+            text-align: center;
+            justify-content: center;
             border: 1px solid rgba(135, 206, 235, 0.2);
         }
 

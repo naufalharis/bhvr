@@ -1,179 +1,349 @@
 import { useState } from "react";
+import "../index.css";
 
-interface Props {
+interface AppProps {
   onLogout: () => void;
 }
 
-export default function Home({ onLogout }: Props) {
+interface User {
+  id: string;
+  first_name: string;
+  last_name?: string;
+  email: string;
+  username: string;
+}
+
+interface Course {
+  id: string;
+  title: string;
+  overview: string;
+  cover: string; // Base64 string atau URL
+  slug: string;
+  course_type: string;
+}
+
+export default function Home({ onLogout }: AppProps) {
+  const [theme, setTheme] = useState<"light" | "dark" | "system">("system");
+  const [user, setUser] = useState<User | null>(null);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [showModal, setShowModal] = useState(false);
+
+  // Form states (modal)
+  const [courseTitle, setCourseTitle] = useState("");
+  const [overview, setOverview] = useState("");
+  const [courseType, setCourseType] = useState("");
+  const [courseSlug, setCourseSlug] = useState("");
+  const [coverImage, setCoverImage] = useState<File | null>(null);
+  const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const token = localStorage.getItem("token");
+
+  // Fetch user & courses
+  const fetchCourses = async () => {
+    if (!token) return;
+    try {
+      const res = await fetch("/api/courses", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("Gagal mengambil course");
+      const data = await res.json();
+      setCourses(data);
+    } catch (error) {
+      console.error("Error fetching courses:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (!token) return;
+
+    const fetchUser = async () => {
+      try {
+        const res = await fetch("/api/users", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) throw new Error("Gagal mengambil data user");
+        const data = await res.json();
+        setUser(data);
+      } catch (error) {
+        console.error("Error fetching user:", error);
+      }
+    };
+
+    fetchUser();
+    fetchCourses();
+  }, [token]);
+
+  // Theme handling
+  useEffect(() => {
+    const root = document.documentElement;
+    const applyTheme = (mode: "light" | "dark" | "system") => {
+      if (mode === "system") {
+        const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        root.setAttribute("data-theme", prefersDark ? "dark" : "light");
+      } else {
+        root.setAttribute("data-theme", mode);
+      }
+    };
+    applyTheme(theme);
+
+    if (theme === "system") {
+      const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+      const handler = (e: MediaQueryListEvent) =>
+        root.setAttribute("data-theme", e.matches ? "dark" : "light");
+      mediaQuery.addEventListener("change", handler);
+      return () => mediaQuery.removeEventListener("change", handler);
+    }
+  }, [theme]);
+
+  // Drag & drop / click handler
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) setCoverImage(e.target.files[0]);
+  };
+
+  // Preview cover
+  useEffect(() => {
+    if (!coverImage) {
+      setCoverPreview(null);
+      return;
+    }
+    const objectUrl = URL.createObjectURL(coverImage);
+    setCoverPreview(objectUrl);
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [coverImage]);
+
+  // Convert file ke Base64
+  const fileToBase64 = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
+    });
+
+  // Submit form
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!courseTitle || !overview || !courseType || !courseSlug || !coverImage) {
+      alert("Please fill all fields and upload a cover image.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      if (!token) throw new Error("Unauthorized");
+
+      const coverBase64 = await fileToBase64(coverImage);
+
+      const body = {
+        title: courseTitle,
+        overview,
+        cover: coverBase64,
+        course_type: courseType,
+        slug: courseSlug,
+      };
+
+      const res = await fetch("/api/courses", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(body),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || "Failed to create course");
+      }
+
+      await fetchCourses(); // refresh courses
+      setShowModal(false);
+      // reset form
+      setCourseTitle("");
+      setOverview("");
+      setCourseType("");
+      setCourseSlug("");
+      setCoverImage(null);
+      setCoverPreview(null);
+      alert("Course created successfully!");
+    } catch (error: any) {
+      console.error("Create course error:", error);
+      alert(`Error creating course: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div
-      className="relative flex h-auto min-h-screen w-full flex-col group/design-root overflow-x-hidden"
-      style={{ fontFamily: 'Inter, "Noto Sans", sans-serif' }}
-    >
-      <div className="layout-container flex h-full grow flex-col">
-        {/* Header */}
-        <header className="flex items-center justify-between whitespace-nowrap border-b border-solid border-b-gray-200 bg-white px-10 py-4 shadow-sm">
-          <div className="flex items-center gap-10">
-            <div className="flex items-center gap-3 text-gray-800">
-              <div className="text-[var(--primary-color)]">
-                <svg
-                  className="w-8 h-8"
-                  fill="none"
-                  viewBox="0 0 48 48"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M4 4H17.3334V17.3334H30.6666V30.6666H44V44H4V4Z"
-                    fill="currentColor"
-                  />
-                </svg>
-              </div>
-              <h1 className="text-gray-900 text-xl font-bold leading-tight tracking-tight">
-                EduHub
-              </h1>
-            </div>
-            <nav className="flex items-center gap-8">
-              <a
-                className="text-gray-600 hover:text-[var(--primary-color)] text-base font-medium leading-normal transition-colors"
-                href="#"
-              >
-                Beranda
-              </a>
-              <a
-                className="text-[var(--primary-color)] text-base font-semibold leading-normal"
-                href="#"
-              >
-                Kursus
-              </a>
-              <a
-                className="text-gray-600 hover:text-[var(--primary-color)] text-base font-medium leading-normal transition-colors"
-                href="#"
-              >
-                Jadwal
-              </a>
-              <a
-                className="text-gray-600 hover:text-[var(--primary-color)] text-base font-medium leading-normal transition-colors"
-                href="#"
-              >
-                Forum
-              </a>
-            </nav>
-          </div>
-          <div className="flex items-center gap-4">
-            {/* Search */}
-            <label className="relative flex-col min-w-40 !h-10 max-w-64 hidden md:flex">
-              <div className="flex w-full flex-1 items-stretch rounded-md h-full">
-                <div className="text-gray-400 flex border-none bg-gray-100 items-center justify-center pl-3 rounded-l-md border-r-0">
-                  <span className="material-symbols-outlined">search</span>
-                </div>
-                <input
-                  type="text"
-                  className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-md text-gray-800 focus:outline-0 focus:ring-2 focus:ring-[var(--primary-color)] border-none bg-gray-100 focus:border-none h-full placeholder:text-gray-400 px-4 rounded-l-none border-l-0 pl-2 text-base font-normal leading-normal"
-                  placeholder="Cari kursus..."
-                  value=""
-                  readOnly
-                />
-              </div>
-            </label>
+    <div className="app">
+      {/* Sidebar */}
+      <aside className="sidebar">
+        <h1>StudyBuddy</h1>
+        <nav>
+          <ul>
+            <li><a href="#" className="active">Dashboard</a></li>
+            <li><a href="#">📝 Assignments</a></li>
+            <li><a href="#">📈 Progress</a></li>
+            <li><a href="#">👥 Community</a></li>
+          </ul>
+        </nav>
+      </aside>
 
-            {/* Notifications */}
-            <button className="flex items-center justify-center rounded-full h-10 w-10 bg-gray-100 hover:bg-gray-200 text-gray-600 transition-colors">
-              <span className="material-symbols-outlined">notifications</span>
-            </button>
-
-            {/* Profile */}
-            <div
-              className="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10"
-              style={{
-                backgroundImage:
-                  'url("https://lh3.googleusercontent.com/aida-public/AB6AXuALazITeWhiyVvCjRqnAZLRVEwgY26TGtJJSQS0WxOqjOHcabYddqh6J2iixItYkqmLka6f5Vdt89TXfsYHQYSOQE69sMT_Y_yOMaQjw8TTU2_n3Zv1BNG-Eldm-ouR2I6XdQcZDKiNR0CKNlxTV1_LjfVBLsO1yKxE4R4oLC_wmrZWhhK-tF7R2z8BWtpuVcXddXMjVLlL2N_XOcrrtO11Wosyn9i17XDUgj9nqewB4UWuvWwIRLK9BPeGszhhvEFLJrqXwyYDK2aN")',
-              }}
-            ></div>
-
-            {/* Logout Button */}
-            <button
-              onClick={onLogout}
-              className="ml-4 px-4 py-2 rounded-md bg-red-500 text-white hover:bg-red-600 transition-colors"
+      {/* Main */}
+      <div className="main">
+        <header className="header">
+          <h2>Welcome back, {user ? user.username : "Loading..."}</h2>
+          <div className="actions">
+            <select
+              value={theme}
+              onChange={(e) =>
+                setTheme(e.target.value as "light" | "dark" | "system")
+              }
+              className="theme-select"
             >
-              Logout
+              <option value="light">☀️ Light</option>
+              <option value="dark">🌙 Dark</option>
+              <option value="system">💻 System</option>
+            </select>
+            <button>🔔</button>
+            <img src="https://i.pravatar.cc/100" alt="User avatar" />
+            <button
+              className="logout-btn"
+              onClick={() => {
+                localStorage.removeItem("token");
+                localStorage.removeItem("user");
+                onLogout();
+              }}
+            >
+              🚪 Logout
             </button>
           </div>
         </header>
 
-        {/* Main */}
-        <main className="flex-1 px-10 md:px-20 lg:px-40 py-8">
-          <div className="layout-content-container flex flex-col max-w-5xl mx-auto">
-            <header className="mb-8">
-              <h1 className="text-gray-900 text-4xl font-bold leading-tight tracking-tighter">
-                Dasbor Saya
-              </h1>
-              <p className="text-gray-600 mt-2 text-lg">
-                Selamat datang kembali! Mari lanjutkan progres belajar Anda.
-              </p>
-            </header>
-
-            {/* Kursus */}
-            <section className="mb-12">
-              <h2 className="text-gray-800 text-2xl font-bold leading-tight tracking-tight mb-6">
-                Kursus yang Sedang Berlangsung
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                {(
-                  [
-                    // Contoh data kursus
-                    {
-                      image: "https://images.unsplash.com/photo-1506744038136-46273834b3fb",
-                      title: "Pemrograman Dasar",
-                      start: "10 Juni 2024",
-                    },
-                    {
-                      image: "https://images.unsplash.com/photo-1519125323398-675f0ddb6308",
-                      title: "Bahasa Inggris",
-                      start: "12 Juni 2024",
-                    },
-                    {
-                      image: "https://images.unsplash.com/photo-1465101046530-73398c7f28ca",
-                      title: "Matematika Lanjutan",
-                      start: "15 Juni 2024",
-                    },
-                  ] as { image: string; title: string; start: string }[]
-                ).map((course, idx) => (
-                  <div
-                    key={idx}
-                    className="flex flex-col gap-4 rounded-lg bg-white shadow-md overflow-hidden transform hover:-translate-y-1 transition-transform duration-300"
-                  >
-                    <div
-                      className="w-full bg-center bg-no-repeat aspect-video bg-cover"
-                      style={{ backgroundImage: `url("${course.image}")` }}
-                    ></div>
-                    <div className="p-5 flex flex-col flex-1">
-                      <h3 className="text-gray-800 text-lg font-semibold leading-normal flex-1">
-                        {course.title}
-                      </h3>
-                      <p className="text-gray-500 text-sm font-normal leading-normal mt-1">
-                        Mulai {course.start}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+        {/* Content */}
+        <main className="content">
+          <div className="cards">
+            <div className="left-column">
+              {/* Profile Card */}
+              <div className="profile-card">
+                <div>
+                  <h3>{user ? user.username : "Loading..."}</h3>
+                  <p>View your profile and settings</p>
+                  <button>View Profile</button>
+                </div>
               </div>
-            </section>
 
-            {/* Progres Belajar & Pemberitahuan */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-              {/* Progres Belajar */}
-              <section className="lg:col-span-2">
-                {/* ...progres belajar sama seperti sebelumnya */}
-              </section>
+              {/* Courses Section */}
+              <div className="courses-section">
+                <div className="flex justify-between items-center mb-4">
+                  <h2>Your Courses</h2>
+                  <button
+                    className="px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600"
+                    onClick={() => setShowModal(true)}
+                  >
+                    ➕ Add New Course
+                  </button>
+                </div>
 
-              {/* Pemberitahuan */}
-              <section>
-                {/* ...pemberitahuan sama seperti sebelumnya */}
-              </section>
+                <div className="course-list">
+                  {courses.length > 0 ? (
+                    courses.map((course) => (
+                      <div key={course.id} className="course-card">
+                        {course.cover && (
+                          <img src={course.cover} alt={course.title} className="course-cover" />
+                        )}
+                        <div className="course-info">
+                          <h3>{course.title}</h3>
+                          <p>{course.overview}</p>
+                          <button>Continue</button>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p>Loading courses...</p>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </main>
       </div>
+
+      {/* Modal */}
+      {showModal && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <h2 className="mb-4">Create New Course</h2>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label>Course Title</label>
+                <input
+                  type="text"
+                  value={courseTitle}
+                  onChange={(e) => setCourseTitle(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div>
+                <label>Overview</label>
+                <textarea
+                  value={overview}
+                  onChange={(e) => setOverview(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div>
+                <label>Course Type</label>
+                <select
+                  value={courseType}
+                  onChange={(e) => setCourseType(e.target.value)}
+                  required
+                >
+                  <option value="">Select type</option>
+                  <option value="single">Single</option>
+                  <option value="bundle">Bundle</option>
+                </select>
+              </div>
+
+              <div>
+                <label>Course Slug</label>
+                <input
+                  type="text"
+                  value={courseSlug}
+                  onChange={(e) => setCourseSlug(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div>
+                <label>Cover Image</label>
+                <input type="file" accept="image/*" onChange={handleFileChange} required />
+                {coverPreview && <img src={coverPreview} alt="Cover Preview" className="w-full mt-2" />}
+              </div>
+
+              <div className="flex justify-end space-x-2 mt-4">
+                <button
+                  type="button"
+                  className="px-4 py-2 bg-gray-300 rounded"
+                  onClick={() => setShowModal(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="px-4 py-2 bg-blue-500 text-white rounded"
+                >
+                  {loading ? "Creating..." : "Create"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

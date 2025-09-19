@@ -15,11 +15,11 @@ const app = new Hono()
 app.route("/api/course-categories", courseCategory);
 
 app.get('/', (c) => c.text("HELLO I'M HONO, PLEASE TESTING VIA POSTMAN APP OR FRONTEND"))
-app.post('/users', createUser) // langsung pakai handler Hono
-app.post('/login', loginUser);
+app.post('/api/users', createUser) // langsung pakai handler Hono
+app.post('/api/login', loginUser);
 // courses
-app.post("/courses", authMiddleware, createCourse);
-app.get('/courses', authMiddleware, getCourses);
+app.post("/api/courses", authMiddleware, createCourse);
+app.get('/api/courses', authMiddleware, getCourses);
 app.put('/courses/:id', authMiddleware, updateCourse)
 app.delete('/courses/:id', authMiddleware, deleteCourse);
 // courses - chapters
