@@ -14,8 +14,6 @@ interface Content {
   sort_order?: number;
   path?: string;
   original_file_name?: string;
-  slides?: string[];
-  download_file?: string;
 }
 
 interface Props {
@@ -29,23 +27,8 @@ export default function ChapterContents({ chapterId }: Props) {
   const [loading, setLoading] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const token = localStorage.getItem("token");
-  const [userName, setUserName] = useState<string>("User");
 
-  // Untuk slide aktif
-  const [activeSlides, setActiveSlides] = useState<Record<string, number>>({});
-
-  useEffect(() => {
-    const user = localStorage.getItem("user");
-    if (user) {
-      try {
-        const parsed = JSON.parse(user);
-        setUserName(parsed.first_name || parsed.username || "User");
-      } catch {
-        setUserName("User");
-      }
-    }
-  }, []);
-
+  // Fetch contents
   const fetchContents = async () => {
     try {
       const res = await fetch(`/api/chapters/${chapterId}/contents`, {
@@ -55,15 +38,16 @@ export default function ChapterContents({ chapterId }: Props) {
       const data = await res.json();
       setContents(data);
     } catch (err) {
-      console.error(err);
-      alert("Error fetching contents. Check CORS or server status.");
+      alert("Error fetching contents");
     }
   };
 
   useEffect(() => {
-    fetchContents();
+    if (chapterId) fetchContents();
+    // eslint-disable-next-line
   }, [chapterId]);
 
+  // Handle input change
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
@@ -72,20 +56,16 @@ export default function ChapterContents({ chapterId }: Props) {
     setForm({ ...form, [e.target.name]: value });
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, key: string) => {
+  // Handle file input for cover only (convert to base64 for preview & send)
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const fileURL = URL.createObjectURL(file);
-
-    if (key === "slides") {
-      setForm({ ...form, slides: [...(form.slides || []), fileURL] });
-    } else if (key === "download_file") {
-      setForm({ ...form, download_file: fileURL, original_file_name: file.name });
-    } else {
-      setForm({ ...form, [key]: fileURL });
-    }
+    const reader = new FileReader();
+    reader.onload = () => setForm((prev) => ({ ...prev, cover: reader.result as string }));
+    reader.readAsDataURL(file);
   };
 
+  // Submit form (add/update)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -95,14 +75,10 @@ export default function ChapterContents({ chapterId }: Props) {
         : `/api/chapters/${chapterId}/contents`;
       const method = editingId ? "PUT" : "POST";
 
-      const payload = editingId
-        ? form
-        : {
-            ...form,
-            chapter_id: chapterId,
-            sort_order: Number(form.sort_order) || 0,
-            content_type: form.content_type || "video",
-          };
+      const payload = {
+        ...form,
+        sort_order: form.sort_order ? Number(form.sort_order) : undefined,
+      };
 
       const res = await fetch(url, {
         method,
@@ -123,19 +99,20 @@ export default function ChapterContents({ chapterId }: Props) {
       setModalOpen(false);
       fetchContents();
     } catch (err: any) {
-      console.error(err);
       alert("Error saving content: " + (err.message || err));
     } finally {
       setLoading(false);
     }
   };
 
+  // Edit content
   const handleEdit = (content: Content) => {
     setEditingId(content.id);
     setForm(content);
     setModalOpen(true);
   };
 
+  // Delete content
   const handleDelete = async (id: string) => {
     if (!window.confirm("Are you sure to delete this content?")) return;
     try {
@@ -143,37 +120,18 @@ export default function ChapterContents({ chapterId }: Props) {
         method: "DELETE",
         headers: { Authorization: token ? `Bearer ${token}` : "" },
       });
-      if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(errText || "Failed to delete content");
-      }
+      if (!res.ok) throw new Error("Failed to delete content");
       fetchContents();
     } catch (err: any) {
-      console.error(err);
       alert("Error deleting content: " + (err.message || err));
     }
-  };
-
-  // Slide navigation
-  const nextSlide = (id: string, length: number) => {
-    setActiveSlides((prev) => ({
-      ...prev,
-      [id]: prev[id] !== undefined ? (prev[id] + 1) % length : 0,
-    }));
-  };
-
-  const prevSlide = (id: string, length: number) => {
-    setActiveSlides((prev) => ({
-      ...prev,
-      [id]: prev[id] !== undefined ? (prev[id] - 1 + length) % length : 0,
-    }));
   };
 
   return (
     <div className="app">
       <Sidebar />
       <div className="main">
-        <Navbar userName={userName} onLogout={() => (window.location.href = "/login")} />
+        <Navbar userName={"User"} onLogout={() => (window.location.href = "/login")} />
         <main className="chapter-page">
           <div className="chapter-header">
             <h1>Chapter Contents</h1>
@@ -189,7 +147,7 @@ export default function ChapterContents({ chapterId }: Props) {
             </button>
           </div>
 
-          {/* Modal */}
+          {/* Modal Form */}
           {modalOpen && (
             <div className="modal-overlay">
               <div className="modal">
@@ -220,65 +178,28 @@ export default function ChapterContents({ chapterId }: Props) {
                     <option value="slide">Slide</option>
                     <option value="download">Download</option>
                   </select>
-
-                  {form.content_type === "video" && (
-                    <>
-                      <label>Cover / Thumbnail</label>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => handleFileChange(e, "cover")}
-                      />
-                      {form.cover && (
-                        <img
-                          src={form.cover}
-                          alt="cover"
-                          style={{ width: "150px", cursor: "pointer" }}
-                          onClick={() => form.path && window.open(form.path, "_blank")}
-                        />
-                      )}
-                      <input
-                        type="text"
-                        name="path"
-                        placeholder="Video URL"
-                        value={form.path || ""}
-                        onChange={handleChange}
-                        required
-                      />
-                    </>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                  />
+                  {form.cover && (
+                    <img src={form.cover} alt="cover" style={{ width: 100, margin: 4 }} />
                   )}
-
-                  {form.content_type === "slide" && (
-                    <>
-                      <label>Slides</label>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => handleFileChange(e, "slides")}
-                      />
-                      <div className="slides-preview">
-                        {form.slides?.map((s, i) => (
-                          <img key={i} src={s} alt={`slide-${i}`} style={{ width: 100, margin: 4 }} />
-                        ))}
-                      </div>
-                    </>
-                  )}
-
-                  {form.content_type === "download" && (
-                    <>
-                      <label>File to Download</label>
-                      <input
-                        type="file"
-                        onChange={(e) => handleFileChange(e, "download_file")}
-                      />
-                      {form.download_file && (
-                        <a href={form.download_file} download={form.original_file_name}>
-                          Download {form.original_file_name}
-                        </a>
-                      )}
-                    </>
-                  )}
-
+                  <input
+                    type="text"
+                    name="path"
+                    placeholder="Path / URL"
+                    value={form.path || ""}
+                    onChange={handleChange}
+                  />
+                  <input
+                    type="text"
+                    name="original_file_name"
+                    placeholder="Original File Name"
+                    value={form.original_file_name || ""}
+                    onChange={handleChange}
+                  />
                   <input
                     type="number"
                     name="sort_order"
@@ -286,7 +207,6 @@ export default function ChapterContents({ chapterId }: Props) {
                     value={form.sort_order || ""}
                     onChange={handleChange}
                   />
-
                   <div style={{ marginTop: 8 }}>
                     <button type="submit" disabled={loading}>
                       {editingId ? "Update Content" : "Add Content"}
@@ -310,47 +230,61 @@ export default function ChapterContents({ chapterId }: Props) {
 
           {/* Card layout */}
           <div className="contents-grid">
-            {contents.map((c) => (
-              <div key={c.id} className="content-card">
-                {c.content_type === "video" && c.cover && (
-                  <img
-                    src={c.cover}
-                    alt={c.title}
-                    style={{ width: "100%", cursor: "pointer" }}
-                    onClick={() => c.path && window.open(c.path, "_blank")}
-                  />
-                )}
-                {c.content_type === "slide" && c.slides && (
-                  <div className="slides-container">
-                    {c.slides.length > 0 && (
-                      <img
-                        src={c.slides[activeSlides[c.id] || 0]}
-                        alt={c.title}
-                        style={{ width: "100%" }}
-                      />
-                    )}
-                    {c.slides.length > 1 && (
-                      <div className="slide-buttons">
-                        <button onClick={() => prevSlide(c.id, c.slides!.length)}>◀</button>
-                        <button onClick={() => nextSlide(c.id, c.slides!.length)}>▶</button>
-                      </div>
-                    )}
+            {/* Video section */}
+            {contents
+              .filter((c) => c.content_type === "video")
+              .map((c) => (
+                <div key={c.id} className="content-card">
+                  {c.cover && (
+                    <img
+                      src={c.cover}
+                      alt={c.title}
+                      style={{ width: "100%", cursor: "pointer" }}
+                      onClick={() => c.path && window.open(c.path, "_blank")}
+                    />
+                  )}
+                  <h3>{c.title}</h3>
+                  <p>{c.overview}</p>
+                  <div className="card-actions">
+                    <button onClick={() => handleEdit(c)}>Edit</button>
+                    <button onClick={() => handleDelete(c.id)}>Delete</button>
                   </div>
-                )}
-                {c.content_type === "download" && c.download_file && (
-                  <a href={c.download_file} download={c.original_file_name}>
-                    Download {c.original_file_name}
-                  </a>
-                )}
-
-                <h3>{c.title}</h3>
-                <p>{c.overview}</p>
-                <div className="card-actions">
-                  <button onClick={() => handleEdit(c)}>Edit</button>
-                  <button onClick={() => handleDelete(c.id)}>Delete</button>
                 </div>
+              ))}
+
+            {/* Slides section (horizontal scroll) */}
+            {contents.some((c) => c.content_type === "slide") && (
+              <div className="slides-scroll">
+                {contents
+                  .filter((c) => c.content_type === "slide")
+                  .map((c) => (
+                    <img
+                      key={c.id}
+                      src={c.cover || c.path}
+                      alt={c.title}
+                      className="slide-img"
+                      title={c.title}
+                    />
+                  ))}
               </div>
-            ))}
+            )}
+
+            {/* Download section */}
+            {contents
+              .filter((c) => c.content_type === "download")
+              .map((c) => (
+                <div key={c.id} className="content-card">
+                  <a href={c.path} download={c.original_file_name}>
+                    Download {c.original_file_name || c.title}
+                  </a>
+                  <h3>{c.title}</h3>
+                  <p>{c.overview}</p>
+                  <div className="card-actions">
+                    <button onClick={() => handleEdit(c)}>Edit</button>
+                    <button onClick={() => handleDelete(c.id)}>Delete</button>
+                  </div>
+                </div>
+              ))}
           </div>
         </main>
       </div>

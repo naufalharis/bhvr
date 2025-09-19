@@ -209,7 +209,20 @@ export const addChapterContent = async (c: HonoContext) => {
     const instructor = await prisma.instructor.findFirst({ where: { user_id: user.id } });
     if (chapter.course.instructor_id !== instructor?.id) return c.json({ error: "You are not the owner of this course" }, 403);
 
-    const { title, overview, cover, content_type, sort_order, path, original_file_name } = await c.req.json();
+    const {
+      title,
+      overview,
+      cover,
+      content_type,
+      sort_order,
+      path,
+      original_file_name,
+    } = await c.req.json();
+
+    // Validasi minimal
+    if (!title || !content_type) {
+      return c.json({ error: "Title and content_type are required" }, 400);
+    }
 
     const newContent = await prisma.courseChapterContent.create({
       data: {
@@ -227,62 +240,81 @@ export const addChapterContent = async (c: HonoContext) => {
     return c.json({ message: "Content added successfully", content: newContent }, 201);
   } catch (error: any) {
     console.error("addChapterContent error:", error);
-    return c.json({ error: error.message }, 500);
+    return c.json({ error: error.message || "Internal server error" }, 500);
   }
 };
 
 export const getContents = async (c: Context) => {
-  const chapterId = c.req.param("chapterId");
-  const contents = await prisma.courseChapterContent.findMany({ where: { chapter_id: chapterId } });
-  return c.json(contents);
+  try {
+    const chapterId = c.req.param("chapterId");
+    if (!chapterId) return c.json({ error: "chapterId is required" }, 400);
+
+    const contents = await prisma.courseChapterContent.findMany({
+      where: { chapter_id: chapterId },
+    });
+    return c.json(contents);
+  } catch (error: any) {
+    return c.json({ error: error.message || "Internal server error" }, 500);
+  }
 };
 
 export const updateContent = async (c: Context) => {
-  const contentId = c.req.param("contentId");
-  const body = await c.req.json();
+  try {
+    const contentId = c.req.param("contentId");
+    if (!contentId) return c.json({ error: "contentId is required" }, 400);
 
-  const content = await prisma.courseChapterContent.findUnique({
-    where: { id: contentId },
-    include: { chapter: { include: { course: true } } },
-  });
-  if (!content) return c.json({ error: "Content not found" }, 404);
+    const body = await c.req.json();
 
-  const user = c.get("user");
-  const instructor = await prisma.instructor.findUnique({ where: { user_id: user.id } });
-  if (content.chapter.course.instructor_id !== instructor?.id) {
-    return c.json({ error: "Forbidden" }, 403);
+    const content = await prisma.courseChapterContent.findUnique({
+      where: { id: contentId },
+      include: { chapter: { include: { course: true } } },
+    });
+    if (!content) return c.json({ error: "Content not found" }, 404);
+
+    const user = c.get("user");
+    const instructor = await prisma.instructor.findUnique({ where: { user_id: user.id } });
+    if (content.chapter.course.instructor_id !== instructor?.id) {
+      return c.json({ error: "Forbidden" }, 403);
+    }
+
+    const updated = await prisma.courseChapterContent.update({
+      where: { id: contentId },
+      data: {
+        title: body.title,
+        overview: body.overview,
+        cover: body.cover,
+        content_type: body.content_type,
+        sort_order: body.sort_order,
+        path: body.path,
+        original_file_name: body.original_file_name,
+      },
+    });
+    return c.json(updated);
+  } catch (error: any) {
+    return c.json({ error: error.message || "Internal server error" }, 500);
   }
-
-  const updated = await prisma.courseChapterContent.update({
-    where: { id: contentId },
-    data: {
-      title: body.title,
-      overview: body.overview,
-      cover: body.cover,
-      content_type: body.content_type,
-      sort_order: body.sort_order,
-      path: body.path,
-      original_file_name: body.original_file_name,
-    },
-  });
-  return c.json(updated);
 };
 
 export const deleteContent = async (c: Context) => {
-  const contentId = c.req.param("contentId");
+  try {
+    const contentId = c.req.param("contentId");
+    if (!contentId) return c.json({ error: "contentId is required" }, 400);
 
-  const content = await prisma.courseChapterContent.findUnique({
-    where: { id: contentId },
-    include: { chapter: { include: { course: true } } },
-  });
-  if (!content) return c.json({ error: "Content not found" }, 404);
+    const content = await prisma.courseChapterContent.findUnique({
+      where: { id: contentId },
+      include: { chapter: { include: { course: true } } },
+    });
+    if (!content) return c.json({ error: "Content not found" }, 404);
 
-  const user = c.get("user");
-  const instructor = await prisma.instructor.findUnique({ where: { user_id: user.id } });
-  if (content.chapter.course.instructor_id !== instructor?.id) {
-    return c.json({ error: "Forbidden" }, 403);
+    const user = c.get("user");
+    const instructor = await prisma.instructor.findUnique({ where: { user_id: user.id } });
+    if (content.chapter.course.instructor_id !== instructor?.id) {
+      return c.json({ error: "Forbidden" }, 403);
+    }
+
+    await prisma.courseChapterContent.delete({ where: { id: contentId } });
+    return c.json({ message: "Content deleted successfully" });
+  } catch (error: any) {
+    return c.json({ error: error.message || "Internal server error" }, 500);
   }
-
-  await prisma.courseChapterContent.delete({ where: { id: contentId } });
-  return c.json({ message: "Content deleted successfully" });
 };
