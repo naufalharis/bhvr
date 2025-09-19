@@ -1,5 +1,5 @@
-import { useState } from "react";
-import "../index.css";
+import React, { useEffect, useState } from "react";
+import "../styles/home.css";
 
 interface AppProps {
   onLogout: () => void;

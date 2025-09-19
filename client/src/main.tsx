@@ -1,10 +1,12 @@
 // index.tsx
 import React, { useState, useEffect } from "react";
 import ReactDOM from "react-dom/client";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import Login from "./components/Login"; // buat komponen Login
-import Home from "./components/Home"; // buat komponen Home
-import "./index.css";
+import { BrowserRouter, Routes, Route, useNavigate, Navigate } from "react-router-dom";
+import Login from "./components/login";
+import Home from "./components/Home";
+import Register from "./components/Register";
+
+
 
 function App() {
   // Ambil status login dari localStorage
