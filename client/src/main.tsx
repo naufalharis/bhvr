@@ -1,15 +1,18 @@
 // index.tsx
 import React, { useState, useEffect } from "react";
 import ReactDOM from "react-dom/client";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useNavigate, Navigate } from "react-router-dom";
 import Login from "./components/Login";
 import Home from "./components/Home";
+import Register from "./components/Register";
+
+
 
 function App() {
   // Ambil status login dari localStorage
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
     const stored = localStorage.getItem("isLoggedIn");
-    return stored === "true" ? true : false;
+    return stored === "true";
   });
 
   // Simpan status login ke localStorage saat berubah
@@ -56,6 +59,8 @@ function App() {
           )
         }
       />
+
+      
 
       {/* Catch all route */}
       <Route path="*" element={<Navigate to="/" replace />} />

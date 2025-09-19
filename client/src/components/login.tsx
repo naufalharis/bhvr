@@ -1,4 +1,3 @@
-// src/components/Login.tsx
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "../styles/login.css";
@@ -13,40 +12,57 @@ export default function Login({ onLogin }: Props) {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  // gunakan proxy dari vite.config.js
+  const API_URL = "/api/login";
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      // gunakan proxy /api/login, fallback ke http://localhost:3000/login
-      const res = await fetch("/api/login", {
+      const res = await fetch(API_URL, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await res.json();
+      let data: any = {};
+      const contentType = res.headers.get("content-type");
+
+      if (contentType && contentType.includes("application/json")) {
+        try {
+          data = await res.json();
+        } catch {
+          data = {};
+        }
+      } else {
+        const text = await res.text();
+        data = text ? { message: text } : {};
+      }
 
       if (!res.ok) {
-        throw new Error(data.error || "Login gagal, periksa email dan password");
+        const errMsg =
+          data?.error || data?.message || `Request failed with status ${res.status}`;
+        throw new Error(errMsg);
       }
 
       console.log("Login response:", data);
 
-      if (data.token) {
-        // simpan token & user ke localStorage
+      if (data?.token) {
         localStorage.setItem("token", data.token);
-        localStorage.setItem("user", JSON.stringify(data.user));
+        if (data.user) {
+          localStorage.setItem("user", JSON.stringify(data.user));
+        }
 
-        onLogin(); // update state dari App
-        navigate("/home"); // redirect ke halaman home
-      } else {
-        alert("Login gagal: email atau password salah");
+        onLogin();
+        navigate("/home");
+        return;
       }
+
+      throw new Error("Login berhasil tapi token tidak ditemukan. Cek backend.");
     } catch (err: any) {
-      alert(err.message || "Terjadi kesalahan saat login");
+      console.error("Login error:", err);
+      alert(err?.message || "Terjadi kesalahan saat login");
     } finally {
       setLoading(false);
     }
@@ -54,17 +70,15 @@ export default function Login({ onLogin }: Props) {
 
   return (
     <div className="login-page">
-      {/* Header */}
       <header className="login-header">
         <div>
-          <h2>Kursus Bimbel</h2>
+          <h2>Kursus</h2>
           <div>
             <Link to="/register">Sign up</Link>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="login-main">
         <div>
           <h1>Login to Your Account</h1>
@@ -113,6 +127,10 @@ export default function Login({ onLogin }: Props) {
             </button>
           </div>
         </form>
+
+        <p>
+          Don&apos;t have an account? <Link to="/register">Sign up</Link>
+        </p>
       </main>
     </div>
   );

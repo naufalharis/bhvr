@@ -39,7 +39,7 @@ export default function Register({ onRegister }: Props) {
     e.preventDefault();
     setLoading(true);
 
-    // mapping ke format prisma
+    // mapping ke format backend (Prisma/Hono)
     const payload = {
       first_name: formData.firstName,
       last_name: formData.lastName,
@@ -50,7 +50,7 @@ export default function Register({ onRegister }: Props) {
       username: formData.username,
       role: formData.role,
       email: formData.email,
-      password: formData.password, // sebaiknya di-hash di backend
+      password: formData.password, // hash di backend
     };
 
     try {
@@ -62,15 +62,29 @@ export default function Register({ onRegister }: Props) {
         body: JSON.stringify(payload),
       });
 
-      const data = await res.json();
+      let data: any = {};
+      const contentType = res.headers.get("content-type");
+
+      if (contentType && contentType.includes("application/json")) {
+        try {
+          data = await res.json();
+        } catch {
+          data = {};
+        }
+      } else {
+        const text = await res.text();
+        data = text ? { message: text } : {};
+      }
 
       if (!res.ok) {
-        throw new Error(data.error || "Gagal mendaftar, coba lagi!");
+        const errMsg =
+          data?.error || data?.message || `Request failed with status ${res.status}`;
+        throw new Error(errMsg);
       }
 
       console.log("Register success:", data);
 
-      // Simpan token/user jika API mengembalikan
+      // simpan token/user jika ada
       if (data.token) {
         localStorage.setItem("token", data.token);
       }
@@ -78,10 +92,11 @@ export default function Register({ onRegister }: Props) {
         localStorage.setItem("user", JSON.stringify(data.user));
       }
 
-      onRegister(); // trigger state App
-      navigate("/home"); // redirect ke home
+      onRegister();
+      navigate("/home");
     } catch (err: any) {
-      alert(err.message || "Terjadi kesalahan saat registrasi");
+      console.error("Register error:", err);
+      alert(err?.message || "Terjadi kesalahan saat registrasi");
     } finally {
       setLoading(false);
     }

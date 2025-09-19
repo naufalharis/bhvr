@@ -8,28 +8,38 @@ import {
      getContents, addChapterContent, updateContent, deleteContent } from './controller/courseController'
 import { authMiddleware } from "./middleware/authMiddleware";
 import courseCategory from './controller/courseCategoryController'
+import { addAffiliateCourse, listAffiliateCourses } from './controller/affiliateController';
+import { createOrder, addOrderLine, addPayment, getOrderDetails } from "./controller/orderController";
 
 const app = new Hono()
 app.route("/api/course-categories", courseCategory);
 
-app.get('/', (c) => c.text('Hello from Hono + Bun!'))
-app.post('/users', createUser) // langsung pakai handler Hono
-app.post('/login', loginUser);
-//courses
-app.post("/courses", authMiddleware, createCourse);
-app.get('/courses', authMiddleware, getCourses);
+app.get('/', (c) => c.text("HELLO I'M HONO, PLEASE TESTING VIA POSTMAN APP OR FRONTEND"))
+app.post('/api/users', createUser) // langsung pakai handler Hono
+app.post('/api/login', loginUser);
+// courses
+app.post("/api/courses", authMiddleware, createCourse);
+app.get('/api/courses', authMiddleware, getCourses);
 app.put('/courses/:id', authMiddleware, updateCourse)
 app.delete('/courses/:id', authMiddleware, deleteCourse);
-//courses - chapters
+// courses - chapters
 app.post("/courses/:courseId/chapters", authMiddleware, addChapter);
 app.get("/courses/:courseId/chapters", authMiddleware, getChapters);
 app.put("/chapters/:chapterId", authMiddleware, updateChapter);
 app.delete("/chapters/:chapterId", authMiddleware, deleteChapter);
-//courses - chapter contents
+// courses - chapter contents
 app.post("/chapters/:chapterId/contents", authMiddleware, addChapterContent);
 app.get("/chapters/:chapterId/contents", authMiddleware, getContents);
 app.put("/contents/:contentId", authMiddleware, updateContent);
 app.delete("/contents/:contentId", authMiddleware, deleteContent);
-//courses - chapter contents
+// affiliates
+app.post("/affiliates/:affiliateId/courses", authMiddleware, addAffiliateCourse);
+app.get("/affiliates/:affiliateId/courses", authMiddleware, listAffiliateCourses);
+// orders and payments
+app.post("/orders", authMiddleware, createOrder);
+app.post("/order-lines", authMiddleware, addOrderLine);
+app.post("/payments", authMiddleware, addPayment);
+app.get("/orders/:id", authMiddleware, getOrderDetails);
+
 
 export default app
