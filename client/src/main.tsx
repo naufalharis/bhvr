@@ -2,11 +2,10 @@
 import React, { useState, useEffect } from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route, useNavigate, Navigate } from "react-router-dom";
-import Login from "./components/login";
+import Login from "./components/Login";
 import Home from "./components/Home";
 import Register from "./components/Register";
-
-
+import Chapter from "./components/Chapter";
 
 function App() {
   // Ambil status login dari localStorage
@@ -26,7 +25,11 @@ function App() {
       <Route
         path="/"
         element={
-          isLoggedIn ? <Navigate to="/home" replace /> : <Navigate to="/login" replace />
+          isLoggedIn ? (
+            <Navigate to="/home" replace />
+          ) : (
+            <Navigate to="/login" replace />
+          )
         }
       />
 
@@ -43,10 +46,7 @@ function App() {
       />
 
       {/* Register route */}
-      <Route
-        path="/register"
-        element={<RegisterRedirect />}
-      />
+      <Route path="/register" element={<RegisterRedirect />} />
 
       {/* Home route */}
       <Route
@@ -60,20 +60,25 @@ function App() {
         }
       />
 
-      
+      {/* Chapter route dengan parameter id */}
+      <Route
+        path="/chapter/:id"
+        element={
+          isLoggedIn ? <Chapter /> : <Navigate to="/login" replace />
+        }
+      />
 
-      {/* Catch all route */}
+      {/* Catch all */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }
 
-// Komponen wrapper untuk Register agar bisa redirect setelah register
+// Wrapper Register agar bisa redirect setelah sukses
 function RegisterRedirect() {
   const navigate = useNavigate();
 
   const handleRegister = () => {
-    // Setelah register sukses, arahkan ke login
     navigate("/login");
   };
 

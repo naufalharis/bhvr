@@ -1,0 +1,20 @@
+import React, { useEffect, useState } from "react";
+import "../../styles/sidebar.css";
+
+export default function Sidebar() {
+  return (
+    <aside className="sidebar">
+      <h1>StudyBuddy</h1>
+      <nav>
+        <ul>
+          <li>
+            <a href="#" className="active">Dashboard</a>
+          </li>
+          <li><a href="#">📝 Assignments</a></li>
+          <li><a href="#">📈 Progress</a></li>
+          <li><a href="#">👥 Community</a></li>
+        </ul>
+      </nav>
+    </aside>
+  );
+}

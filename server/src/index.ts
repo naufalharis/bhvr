@@ -20,8 +20,8 @@ app.post('/api/login', loginUser);
 // courses
 app.post("/api/courses", authMiddleware, createCourse);
 app.get('/api/courses', authMiddleware, getCourses);
-app.put('/courses/:id', authMiddleware, updateCourse)
-app.delete('/courses/:id', authMiddleware, deleteCourse);
+app.put('/api/courses/:id', authMiddleware, updateCourse)
+app.delete('/api/courses/:id', authMiddleware, deleteCourse);
 // courses - chapters
 app.post("/courses/:courseId/chapters", authMiddleware, addChapter);
 app.get("/courses/:courseId/chapters", authMiddleware, getChapters);
