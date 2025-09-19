@@ -41,6 +41,7 @@ export default function Home({ onLogout }: AppProps) {
 
   const token = localStorage.getItem("token");
 
+  /** Ambil user dari localStorage */
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
@@ -52,6 +53,7 @@ export default function Home({ onLogout }: AppProps) {
     }
   }, []);
 
+  /** Fetch courses dari API */
   const fetchCourses = async () => {
     if (!token) return;
     try {
@@ -59,7 +61,7 @@ export default function Home({ onLogout }: AppProps) {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error("Gagal mengambil course");
-      const data = await res.json();
+      const data: Course[] = await res.json();
       setCourses(data);
     } catch (error) {
       console.error("Error fetching courses:", error);
@@ -70,10 +72,14 @@ export default function Home({ onLogout }: AppProps) {
     if (token) fetchCourses();
   }, [token]);
 
+  /** File upload handler */
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) setCoverImage(e.target.files[0]);
+    if (e.target.files && e.target.files[0]) {
+      setCoverImage(e.target.files[0]);
+    }
   };
 
+  /** Generate preview ketika ada file baru */
   useEffect(() => {
     if (!coverImage) {
       setCoverPreview(null);
@@ -84,6 +90,7 @@ export default function Home({ onLogout }: AppProps) {
     return () => URL.revokeObjectURL(objectUrl);
   }, [coverImage]);
 
+  /** Helper untuk convert file ke base64 */
   const fileToBase64 = (file: File): Promise<string> =>
     new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -92,6 +99,7 @@ export default function Home({ onLogout }: AppProps) {
       reader.onerror = (error) => reject(error);
     });
 
+  /** Submit form */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!courseTitle || !overview || !courseType || !courseSlug) {
@@ -106,7 +114,8 @@ export default function Home({ onLogout }: AppProps) {
       let coverBase64: string | null = null;
       if (coverImage) {
         coverBase64 = await fileToBase64(coverImage);
-      } else if (coverPreview) {
+      } else if (coverPreview && !coverPreview.startsWith("blob:")) {
+        // kalau preview dari server (edit mode)
         coverBase64 = coverPreview;
       }
 
@@ -118,26 +127,17 @@ export default function Home({ onLogout }: AppProps) {
         slug: courseSlug,
       };
 
-      let res: Response;
-      if (courseId) {
-        res = await fetch(`/api/courses/${courseId}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(body),
-        });
-      } else {
-        res = await fetch("/api/courses", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(body),
-        });
-      }
+      const url = courseId ? `/api/courses/${courseId}` : "/api/courses";
+      const method = courseId ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(body),
+      });
 
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
@@ -156,6 +156,7 @@ export default function Home({ onLogout }: AppProps) {
     }
   };
 
+  /** Reset form */
   const resetForm = () => {
     setCourseId(null);
     setCourseTitle("");
@@ -166,9 +167,10 @@ export default function Home({ onLogout }: AppProps) {
     setCoverPreview(null);
   };
 
+  /** Delete course */
   const handleDelete = async (id: string) => {
     if (!token) return;
-    if (!confirm("Are you sure you want to delete this course?")) return;
+    if (!window.confirm("Are you sure you want to delete this course?")) return;
 
     try {
       const res = await fetch(`/api/courses/${id}`, {
@@ -183,13 +185,14 @@ export default function Home({ onLogout }: AppProps) {
     }
   };
 
+  /** Edit course */
   const handleEdit = (course: Course) => {
     setCourseId(course.id);
     setCourseTitle(course.title);
     setOverview(course.overview);
     setCourseType(course.course_type);
     setCourseSlug(course.slug);
-    setCoverPreview(course.cover);
+    setCoverPreview(course.cover); // preview dari API
     setShowModal(true);
   };
 
@@ -199,67 +202,66 @@ export default function Home({ onLogout }: AppProps) {
       <div className="main">
         <Navbar userName={user ? user.first_name : "Loading..."} onLogout={onLogout} />
         <main className="content">
-          <div className="cards">
-            <div className="left-column">
-              <div className="profile-card">
-                <div>
-                  <h3>{user ? user.first_name : "Loading..."}</h3>
-                  <p>View your profile and settings</p>
-                  <button>View Profile</button>
-                </div>
-              </div>
+          {/* Profile Card */}
+          <div className="profile-card">
+            <h3>{user ? user.first_name : "Loading..."}</h3>
+            <p>View your profile and settings</p>
+            <button>View Profile</button>
+          </div>
 
-              <div className="courses-section">
-                <div className="flex justify-between items-center mb-4">
-                  <h2>Your Courses</h2>
-                  <button
-                    className="px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600"
-                    onClick={() => {
-                      resetForm();
-                      setShowModal(true);
-                    }}
-                  >
-                    ➕ Add New Course
-                  </button>
-                </div>
+          {/* Courses */}
+          <div className="courses-section">
+            <div className="flex justify-between items-center mb-4">
+              <h2>Your Courses</h2>
+              <button
+                className="px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600"
+                onClick={() => {
+                  resetForm();
+                  setShowModal(true);
+                }}
+              >
+                ➕ Add New Course
+              </button>
+            </div>
 
-                <div className="course-list">
-                  {courses.length > 0 ? (
-                    courses.map((course) => (
-                      <div key={course.id} className="course-card">
-                        {course.cover && (
-                          <img src={course.cover} alt={course.title} className="course-cover" />
-                        )}
-                        <div className="course-info">
-                        <Link to={`/chapter/${course.id}`}>{course.title}</Link>
-                          <p>{course.overview}</p>
-                          <div className="flex space-x-2 mt-2">
-                            <button
-                              className="px-3 py-1 bg-green-500 text-white rounded"
-                              onClick={() => handleEdit(course)}
-                            >
-                              ✏️ Edit
-                            </button>
-                            <button
-                              className="px-3 py-1 bg-red-500 text-white rounded"
-                              onClick={() => handleDelete(course.id)}
-                            >
-                              🗑️ Delete
-                            </button>
-                          </div>
-                        </div>
+            <div className="course-list">
+              {courses.length > 0 ? (
+                courses.map((course) => (
+                  <div key={course.id} className="course-card">
+                    {course.cover && (
+                      <img src={course.cover} alt={course.title} className="course-cover" />
+                    )}
+                    <div className="course-info">
+                      <Link to={`/chapter/${course.id}`}>
+                        <h3>{course.title}</h3>
+                      </Link>
+                      <p>{course.overview}</p>
+                      <div className="flex space-x-2 mt-2">
+                        <button
+                          className="px-3 py-1 bg-green-500 text-white rounded"
+                          onClick={() => handleEdit(course)}
+                        >
+                          ✏️ Edit
+                        </button>
+                        <button
+                          className="px-3 py-1 bg-red-500 text-white rounded"
+                          onClick={() => handleDelete(course.id)}
+                        >
+                          🗑️ Delete
+                        </button>
                       </div>
-                    ))
-                  ) : (
-                    <p>No courses available.</p>
-                  )}
-                </div>
-              </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p>No courses available.</p>
+              )}
             </div>
           </div>
         </main>
       </div>
 
+      {/* Modal */}
       {showModal && (
         <div className="modal-overlay">
           <div className="modal">
@@ -310,7 +312,9 @@ export default function Home({ onLogout }: AppProps) {
               <div>
                 <label>Cover Image</label>
                 <input type="file" accept="image/*" onChange={handleFileChange} />
-                {coverPreview && <img src={coverPreview} alt="Cover Preview" className="w-full mt-2" />}
+                {coverPreview && (
+                  <img src={coverPreview} alt="Cover Preview" className="w-full mt-2" />
+                )}
               </div>
 
               <div className="flex justify-end space-x-2 mt-4">

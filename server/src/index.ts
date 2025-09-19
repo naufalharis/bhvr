@@ -23,10 +23,10 @@ app.get('/api/courses', authMiddleware, getCourses);
 app.put('/api/courses/:id', authMiddleware, updateCourse)
 app.delete('/api/courses/:id', authMiddleware, deleteCourse);
 // courses - chapters
-app.post("/courses/:courseId/chapters", authMiddleware, addChapter);
-app.get("/courses/:courseId/chapters", authMiddleware, getChapters);
-app.put("/chapters/:chapterId", authMiddleware, updateChapter);
-app.delete("/chapters/:chapterId", authMiddleware, deleteChapter);
+app.post("api/courses/:courseId/chapters", authMiddleware, addChapter);
+app.get("api/courses/:courseId/chapters", authMiddleware, getChapters);
+app.put("api/chapters/:chapterId", authMiddleware, updateChapter);
+app.delete("api/chapters/:chapterId", authMiddleware, deleteChapter);
 // courses - chapter contents
 app.post("/chapters/:chapterId/contents", authMiddleware, addChapterContent);
 app.get("/chapters/:chapterId/contents", authMiddleware, getContents);

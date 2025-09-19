@@ -12,7 +12,7 @@ export default function Navbar({ userName, onLogout }: NavbarProps) {
 
   return (
     <header className="header">
-      <h2>Welcome back, {userName}</h2>
+      <h2>👋 {userName}</h2>
       <div className="actions">
         <select
           value={theme}
