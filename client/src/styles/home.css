@@ -254,12 +254,6 @@ body {
   background: var(--bg-secondary);
 }
 
-.cards {
-  display: grid;
-  grid-template-columns: 1fr 300px;
-  gap: 2rem;
-  height: 100%;
-}
 
 .left-column {
   display: flex;
@@ -276,6 +270,7 @@ body {
   border: 1px solid var(--border-color);
   transition: all 0.3s ease;
 }
+
 
 .profile-card:hover {
   transform: translateY(-4px);
@@ -412,7 +407,7 @@ body {
   font-size: 1.25rem;
   font-weight: 600;
   margin-bottom: 0.75rem;
-  line-height: 1.4;
+  line-height:2px;
 }
 
 .course-info p {
