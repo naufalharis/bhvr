@@ -1,6 +1,8 @@
-// src/components/Home.tsx
 import React, { useEffect, useState } from "react";
+import Sidebar from "./pages/Sidebar";
+import Navbar from "./pages/Navbar";
 import "../styles/home.css";
+import { Link } from "react-router-dom";
 
 interface AppProps {
   onLogout: () => void;
@@ -18,18 +20,17 @@ interface Course {
   id: string;
   title: string;
   overview: string;
-  cover: string; // Base64 string atau URL
+  cover: string;
   slug: string;
   course_type: string;
 }
 
 export default function Home({ onLogout }: AppProps) {
-  const [theme, setTheme] = useState<"light" | "dark" | "system">("system");
   const [user, setUser] = useState<User | null>(null);
   const [courses, setCourses] = useState<Course[]>([]);
   const [showModal, setShowModal] = useState(false);
 
-  // Form states (modal)
+  const [courseId, setCourseId] = useState<string | null>(null);
   const [courseTitle, setCourseTitle] = useState("");
   const [overview, setOverview] = useState("");
   const [courseType, setCourseType] = useState("");
@@ -40,7 +41,17 @@ export default function Home({ onLogout }: AppProps) {
 
   const token = localStorage.getItem("token");
 
-  // Fetch user & courses
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (err) {
+        console.error("Failed to parse stored user:", err);
+      }
+    }
+  }, []);
+
   const fetchCourses = async () => {
     if (!token) return;
     try {
@@ -56,53 +67,13 @@ export default function Home({ onLogout }: AppProps) {
   };
 
   useEffect(() => {
-    if (!token) return;
-
-    const fetchUser = async () => {
-      try {
-        const res = await fetch("/api/users", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!res.ok) throw new Error("Gagal mengambil data user");
-        const data = await res.json();
-        setUser(data);
-      } catch (error) {
-        console.error("Error fetching user:", error);
-      }
-    };
-
-    fetchUser();
-    fetchCourses();
+    if (token) fetchCourses();
   }, [token]);
 
-  // Theme handling
-  useEffect(() => {
-    const root = document.documentElement;
-    const applyTheme = (mode: "light" | "dark" | "system") => {
-      if (mode === "system") {
-        const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-        root.setAttribute("data-theme", prefersDark ? "dark" : "light");
-      } else {
-        root.setAttribute("data-theme", mode);
-      }
-    };
-    applyTheme(theme);
-
-    if (theme === "system") {
-      const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-      const handler = (e: MediaQueryListEvent) =>
-        root.setAttribute("data-theme", e.matches ? "dark" : "light");
-      mediaQuery.addEventListener("change", handler);
-      return () => mediaQuery.removeEventListener("change", handler);
-    }
-  }, [theme]);
-
-  // Drag & drop / click handler
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) setCoverImage(e.target.files[0]);
   };
 
-  // Preview cover
   useEffect(() => {
     if (!coverImage) {
       setCoverPreview(null);
@@ -113,7 +84,6 @@ export default function Home({ onLogout }: AppProps) {
     return () => URL.revokeObjectURL(objectUrl);
   }, [coverImage]);
 
-  // Convert file ke Base64
   const fileToBase64 = (file: File): Promise<string> =>
     new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -122,11 +92,10 @@ export default function Home({ onLogout }: AppProps) {
       reader.onerror = (error) => reject(error);
     });
 
-  // Submit form
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!courseTitle || !overview || !courseType || !courseSlug || !coverImage) {
-      alert("Please fill all fields and upload a cover image.");
+    if (!courseTitle || !overview || !courseType || !courseSlug) {
+      alert("Please fill all fields.");
       return;
     }
 
@@ -134,7 +103,12 @@ export default function Home({ onLogout }: AppProps) {
     try {
       if (!token) throw new Error("Unauthorized");
 
-      const coverBase64 = await fileToBase64(coverImage);
+      let coverBase64: string | null = null;
+      if (coverImage) {
+        coverBase64 = await fileToBase64(coverImage);
+      } else if (coverPreview) {
+        coverBase64 = coverPreview;
+      }
 
       const body = {
         title: courseTitle,
@@ -144,104 +118,106 @@ export default function Home({ onLogout }: AppProps) {
         slug: courseSlug,
       };
 
-      const res = await fetch("/api/courses", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(body),
-      });
+      let res: Response;
+      if (courseId) {
+        res = await fetch(`/api/courses/${courseId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(body),
+        });
+      } else {
+        res = await fetch("/api/courses", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(body),
+        });
+      }
 
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || "Failed to create course");
+        throw new Error(errData.error || "Failed to save course");
       }
 
-      await fetchCourses(); // refresh courses
+      await fetchCourses();
       setShowModal(false);
-      // reset form
-      setCourseTitle("");
-      setOverview("");
-      setCourseType("");
-      setCourseSlug("");
-      setCoverImage(null);
-      setCoverPreview(null);
-      alert("Course created successfully!");
+      resetForm();
+      alert(courseId ? "Course updated successfully!" : "Course created successfully!");
     } catch (error: any) {
-      console.error("Create course error:", error);
-      alert(`Error creating course: ${error.message}`);
+      console.error("Save course error:", error);
+      alert(`Error saving course: ${error.message}`);
     } finally {
       setLoading(false);
     }
   };
 
+  const resetForm = () => {
+    setCourseId(null);
+    setCourseTitle("");
+    setOverview("");
+    setCourseType("");
+    setCourseSlug("");
+    setCoverImage(null);
+    setCoverPreview(null);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!token) return;
+    if (!confirm("Are you sure you want to delete this course?")) return;
+
+    try {
+      const res = await fetch(`/api/courses/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("Failed to delete course");
+      await fetchCourses();
+    } catch (error) {
+      console.error("Delete error:", error);
+      alert("Error deleting course");
+    }
+  };
+
+  const handleEdit = (course: Course) => {
+    setCourseId(course.id);
+    setCourseTitle(course.title);
+    setOverview(course.overview);
+    setCourseType(course.course_type);
+    setCourseSlug(course.slug);
+    setCoverPreview(course.cover);
+    setShowModal(true);
+  };
+
   return (
     <div className="app">
-      {/* Sidebar */}
-      <aside className="sidebar">
-        <h1>StudyBuddy</h1>
-        <nav>
-          <ul>
-            <li><a href="#" className="active">Dashboard</a></li>
-            <li><a href="#">📝 Assignments</a></li>
-            <li><a href="#">📈 Progress</a></li>
-            <li><a href="#">👥 Community</a></li>
-          </ul>
-        </nav>
-      </aside>
-
-      {/* Main */}
+      <Sidebar />
       <div className="main">
-        <header className="header">
-          <h2>Welcome back, {user ? user.username : "Loading..."}</h2>
-          <div className="actions">
-            <select
-              value={theme}
-              onChange={(e) =>
-                setTheme(e.target.value as "light" | "dark" | "system")
-              }
-              className="theme-select"
-            >
-              <option value="light">☀️ Light</option>
-              <option value="dark">🌙 Dark</option>
-              <option value="system">💻 System</option>
-            </select>
-            <button>🔔</button>
-            <img src="https://i.pravatar.cc/100" alt="User avatar" />
-            <button
-              className="logout-btn"
-              onClick={() => {
-                localStorage.removeItem("token");
-                localStorage.removeItem("user");
-                onLogout();
-              }}
-            >
-              🚪 Logout
-            </button>
-          </div>
-        </header>
-
-        {/* Content */}
+        <Navbar userName={user ? user.first_name : "Loading..."} onLogout={onLogout} />
         <main className="content">
           <div className="cards">
             <div className="left-column">
-              {/* Profile Card */}
               <div className="profile-card">
                 <div>
-                  <h3>{user ? user.username : "Loading..."}</h3>
+                  <h3>{user ? user.first_name : "Loading..."}</h3>
                   <p>View your profile and settings</p>
                   <button>View Profile</button>
                 </div>
               </div>
 
-              {/* Courses Section */}
               <div className="courses-section">
                 <div className="flex justify-between items-center mb-4">
                   <h2>Your Courses</h2>
                   <button
                     className="px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600"
-                    onClick={() => setShowModal(true)}
+                    onClick={() => {
+                      resetForm();
+                      setShowModal(true);
+                    }}
                   >
                     ➕ Add New Course
                   </button>
@@ -255,14 +231,27 @@ export default function Home({ onLogout }: AppProps) {
                           <img src={course.cover} alt={course.title} className="course-cover" />
                         )}
                         <div className="course-info">
-                          <h3>{course.title}</h3>
+                        <Link to={`/chapter/${course.id}`}>{course.title}</Link>
                           <p>{course.overview}</p>
-                          <button>Continue</button>
+                          <div className="flex space-x-2 mt-2">
+                            <button
+                              className="px-3 py-1 bg-green-500 text-white rounded"
+                              onClick={() => handleEdit(course)}
+                            >
+                              ✏️ Edit
+                            </button>
+                            <button
+                              className="px-3 py-1 bg-red-500 text-white rounded"
+                              onClick={() => handleDelete(course.id)}
+                            >
+                              🗑️ Delete
+                            </button>
+                          </div>
                         </div>
                       </div>
                     ))
                   ) : (
-                    <p>Loading courses...</p>
+                    <p>No courses available.</p>
                   )}
                 </div>
               </div>
@@ -271,11 +260,10 @@ export default function Home({ onLogout }: AppProps) {
         </main>
       </div>
 
-      {/* Modal */}
       {showModal && (
         <div className="modal-overlay">
           <div className="modal">
-            <h2 className="mb-4">Create New Course</h2>
+            <h2 className="mb-4">{courseId ? "Edit Course" : "Create New Course"}</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label>Course Title</label>
@@ -321,7 +309,7 @@ export default function Home({ onLogout }: AppProps) {
 
               <div>
                 <label>Cover Image</label>
-                <input type="file" accept="image/*" onChange={handleFileChange} required />
+                <input type="file" accept="image/*" onChange={handleFileChange} />
                 {coverPreview && <img src={coverPreview} alt="Cover Preview" className="w-full mt-2" />}
               </div>
 
@@ -338,7 +326,7 @@ export default function Home({ onLogout }: AppProps) {
                   disabled={loading}
                   className="px-4 py-2 bg-blue-500 text-white rounded"
                 >
-                  {loading ? "Creating..." : "Create"}
+                  {loading ? "Saving..." : "Save"}
                 </button>
               </div>
             </form>
