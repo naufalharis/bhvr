@@ -22,13 +22,14 @@ export default function ChapterContents({ chapterId }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const token = localStorage.getItem("token"); // optional auth token
+  const token = localStorage.getItem("token");
 
   const fetchContents = async () => {
     try {
-      const res = await fetch(`http://localhost:3000/api/chapters/${chapterId}/contents`, {
+      const res = await fetch(`/api/chapters/${chapterId}/contents`, {
         headers: { Authorization: token ? `Bearer ${token}` : "" },
       });
+      if (!res.ok) throw new Error("Failed to fetch contents");
       const data = await res.json();
       setContents(data);
     } catch (err) {
@@ -37,10 +38,13 @@ export default function ChapterContents({ chapterId }: Props) {
   };
 
   useEffect(() => {
-    fetchContents();
+    if (chapterId) fetchContents();
+    // eslint-disable-next-line
   }, [chapterId]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
@@ -48,10 +52,25 @@ export default function ChapterContents({ chapterId }: Props) {
     e.preventDefault();
     setLoading(true);
     try {
-      const url = editingId
-        ? `http://localhost:3000/api/contents/${editingId}`
-        : `http://localhost:3000/api/chapters/${chapterId}/contents`;
-      const method = editingId ? "PUT" : "POST";
+      let url = "";
+      let method: "POST" | "PUT" = "POST";
+      let body: any = {
+        title: form.title,
+        overview: form.overview,
+        cover: form.cover,
+        content_type: form.content_type,
+        sort_order: form.sort_order ? Number(form.sort_order) : undefined,
+        path: form.path,
+        original_file_name: form.original_file_name,
+      };
+
+      if (editingId) {
+        url = `/api/contents/${editingId}`;
+        method = "PUT";
+      } else {
+        url = `/api/chapters/${chapterId}/contents`;
+        method = "POST";
+      }
 
       const res = await fetch(url, {
         method,
@@ -59,16 +78,19 @@ export default function ChapterContents({ chapterId }: Props) {
           "Content-Type": "application/json",
           Authorization: token ? `Bearer ${token}` : "",
         },
-        body: JSON.stringify(form),
+        body: JSON.stringify(body),
       });
 
-      if (!res.ok) throw new Error("Failed to save content");
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || "Failed to save content");
+      }
 
       setForm({});
       setEditingId(null);
       fetchContents();
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      alert(err.message || "Failed to save content");
     } finally {
       setLoading(false);
     }
@@ -76,21 +98,32 @@ export default function ChapterContents({ chapterId }: Props) {
 
   const handleEdit = (content: Content) => {
     setEditingId(content.id);
-    setForm(content);
+    setForm({
+      title: content.title,
+      overview: content.overview,
+      cover: content.cover,
+      content_type: content.content_type,
+      sort_order: content.sort_order,
+      path: content.path,
+      original_file_name: content.original_file_name,
+    });
   };
 
   const handleDelete = async (id: string) => {
     if (!window.confirm("Are you sure to delete this content?")) return;
 
     try {
-      const res = await fetch(`http://localhost:3000/api/contents/${id}`, {
+      const res = await fetch(`/api/contents/${id}`, {
         method: "DELETE",
         headers: { Authorization: token ? `Bearer ${token}` : "" },
       });
-      if (!res.ok) throw new Error("Failed to delete content");
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || "Failed to delete content");
+      }
       fetchContents();
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      alert(err.message || "Failed to delete content");
     }
   };
 
@@ -119,7 +152,12 @@ export default function ChapterContents({ chapterId }: Props) {
           value={form.cover || ""}
           onChange={handleChange}
         />
-        <select name="content_type" value={form.content_type || ""} onChange={handleChange} required>
+        <select
+          name="content_type"
+          value={form.content_type || ""}
+          onChange={handleChange}
+          required
+        >
           <option value="">Select Type</option>
           <option value="VIDEO">VIDEO</option>
           <option value="PDF">PDF</option>
@@ -149,7 +187,17 @@ export default function ChapterContents({ chapterId }: Props) {
         <button type="submit" disabled={loading}>
           {editingId ? "Update Content" : "Add Content"}
         </button>
-        {editingId && <button type="button" onClick={() => { setEditingId(null); setForm({}); }}>Cancel</button>}
+        {editingId && (
+          <button
+            type="button"
+            onClick={() => {
+              setEditingId(null);
+              setForm({});
+            }}
+          >
+            Cancel
+          </button>
+        )}
       </form>
 
       <table border={1} cellPadding={5}>
