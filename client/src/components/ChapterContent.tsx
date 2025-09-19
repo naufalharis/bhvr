@@ -1,4 +1,8 @@
+// ChapterContent.tsx
 import React, { useEffect, useState } from "react";
+import Navbar from "./pages/Navbar";
+import Sidebar from "./pages/Sidebar";
+import "../styles/chaptercontent.css";
 
 interface Content {
   id: string;
@@ -6,10 +10,12 @@ interface Content {
   title: string;
   overview?: string;
   cover?: string;
-  content_type: string;
+  content_type: "video" | "slide" | "download";
   sort_order?: number;
   path?: string;
   original_file_name?: string;
+  slides?: string[];
+  download_file?: string;
 }
 
 interface Props {
@@ -22,7 +28,7 @@ export default function ChapterContents({ chapterId }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("token"); // optional auth token
 
   const fetchContents = async () => {
     try {
@@ -34,6 +40,7 @@ export default function ChapterContents({ chapterId }: Props) {
       setContents(data);
     } catch (err) {
       console.error(err);
+      alert("Error fetching contents. Check CORS or server status.");
     }
   };
 
@@ -42,9 +49,7 @@ export default function ChapterContents({ chapterId }: Props) {
     // eslint-disable-next-line
   }, [chapterId]);
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-  ) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
@@ -52,25 +57,19 @@ export default function ChapterContents({ chapterId }: Props) {
     e.preventDefault();
     setLoading(true);
     try {
-      let url = "";
-      let method: "POST" | "PUT" = "POST";
-      let body: any = {
-        title: form.title,
-        overview: form.overview,
-        cover: form.cover,
-        content_type: form.content_type,
-        sort_order: form.sort_order ? Number(form.sort_order) : undefined,
-        path: form.path,
-        original_file_name: form.original_file_name,
-      };
+      const url = editingId
+        ? `http://localhost:3000/api/contents/${editingId}`
+        : `http://localhost:3000/api/chapters/${chapterId}/contents`;
+      const method = editingId ? "PUT" : "POST";
 
-      if (editingId) {
-        url = `/api/contents/${editingId}`;
-        method = "PUT";
-      } else {
-        url = `/api/chapters/${chapterId}/contents`;
-        method = "POST";
-      }
+      const payload = editingId
+        ? form
+        : {
+            ...form,
+            chapter_id: chapterId,
+            sort_order: Number(form.sort_order) || 0,
+            content_type: form.content_type || "video",
+          };
 
       const res = await fetch(url, {
         method,
@@ -78,19 +77,17 @@ export default function ChapterContents({ chapterId }: Props) {
           "Content-Type": "application/json",
           Authorization: token ? `Bearer ${token}` : "",
         },
-        body: JSON.stringify(body),
+        body: JSON.stringify(form),
       });
 
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || "Failed to save content");
-      }
+      if (!res.ok) throw new Error("Failed to save content");
 
       setForm({});
       setEditingId(null);
+      setModalOpen(false);
       fetchContents();
-    } catch (err: any) {
-      alert(err.message || "Failed to save content");
+    } catch (err) {
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -98,32 +95,20 @@ export default function ChapterContents({ chapterId }: Props) {
 
   const handleEdit = (content: Content) => {
     setEditingId(content.id);
-    setForm({
-      title: content.title,
-      overview: content.overview,
-      cover: content.cover,
-      content_type: content.content_type,
-      sort_order: content.sort_order,
-      path: content.path,
-      original_file_name: content.original_file_name,
-    });
+    setForm(content);
   };
 
   const handleDelete = async (id: string) => {
     if (!window.confirm("Are you sure to delete this content?")) return;
-
     try {
       const res = await fetch(`/api/contents/${id}`, {
         method: "DELETE",
         headers: { Authorization: token ? `Bearer ${token}` : "" },
       });
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || "Failed to delete content");
-      }
+      if (!res.ok) throw new Error("Failed to delete content");
       fetchContents();
-    } catch (err: any) {
-      alert(err.message || "Failed to delete content");
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -152,12 +137,7 @@ export default function ChapterContents({ chapterId }: Props) {
           value={form.cover || ""}
           onChange={handleChange}
         />
-        <select
-          name="content_type"
-          value={form.content_type || ""}
-          onChange={handleChange}
-          required
-        >
+        <select name="content_type" value={form.content_type || ""} onChange={handleChange} required>
           <option value="">Select Type</option>
           <option value="VIDEO">VIDEO</option>
           <option value="PDF">PDF</option>
@@ -187,17 +167,7 @@ export default function ChapterContents({ chapterId }: Props) {
         <button type="submit" disabled={loading}>
           {editingId ? "Update Content" : "Add Content"}
         </button>
-        {editingId && (
-          <button
-            type="button"
-            onClick={() => {
-              setEditingId(null);
-              setForm({});
-            }}
-          >
-            Cancel
-          </button>
-        )}
+        {editingId && <button type="button" onClick={() => { setEditingId(null); setForm({}); }}>Cancel</button>}
       </form>
 
       <table border={1} cellPadding={5}>
