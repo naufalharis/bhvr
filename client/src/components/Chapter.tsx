@@ -1,6 +1,6 @@
 // Chapter.tsx
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import Navbar from "./pages/Navbar";
 import Sidebar from "./pages/Sidebar";
 import "../styles/chapter.css";
@@ -14,7 +14,8 @@ interface Chapter {
 }
 
 export default function Chapter() {
-  const { id: courseId } = useParams<{ id: string }>(); // Ambil 'id' lalu alias ke 'courseId'
+  const { id: courseId } = useParams<{ id: string }>();
+  const navigate = useNavigate(); // Tambahkan useNavigate
 
   const [userName, setUserName] = useState<string>("");
   const [chapters, setChapters] = useState<Chapter[]>([]);
@@ -25,7 +26,8 @@ export default function Chapter() {
   // Form state
   const [title, setTitle] = useState("");
   const [overview, setOverview] = useState("");
-  const [cover, setCover] = useState("");
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [coverPreview, setCoverPreview] = useState<string>("");
   const [sortOrder, setSortOrder] = useState<number | undefined>(undefined);
 
   // Fetch chapters
@@ -47,7 +49,6 @@ export default function Chapter() {
   };
 
   useEffect(() => {
-    // ambil data user dari localStorage
     const user = localStorage.getItem("user");
     if (user) {
       try {
@@ -65,56 +66,78 @@ export default function Chapter() {
   const resetForm = () => {
     setTitle("");
     setOverview("");
-    setCover("");
+    setCoverFile(null);
+    setCoverPreview("");
     setSortOrder(undefined);
     setEditId(null);
+  };
+
+  // Handle file change
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    setCoverFile(file);
+    if (file) {
+      setCoverPreview(URL.createObjectURL(file));
+    } else {
+      setCoverPreview("");
+    }
   };
 
   // Submit handler
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const token = localStorage.getItem("token");
+
     try {
-      let res;
-      if (editId) {
-        // Update
-        res = await fetch(`/api/chapters/${editId}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            title,
-            overview,
-            cover,
-            sort_order: sortOrder,
-          }),
-        });
+      let body: any = {
+        title,
+        overview,
+        sort_order: sortOrder,
+      };
+
+      if (coverFile) {
+        const reader = new FileReader();
+        reader.readAsDataURL(coverFile);
+        reader.onloadend = async () => {
+          body.cover = reader.result;
+          await submitToServer(body);
+        };
       } else {
-        // Create
-        res = await fetch(`/api/courses/${courseId}/chapters`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            title,
-            overview,
-            cover,
-            sort_order: sortOrder,
-          }),
-        });
+        body.cover = coverPreview || "";
+        await submitToServer(body);
       }
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Error saving chapter");
-      fetchChapters();
-      setShowModal(false);
-      resetForm();
     } catch (err: any) {
       alert("Error saving chapter: " + (err.message || "Unknown error"));
     }
+  };
+
+  const submitToServer = async (body: any) => {
+    const token = localStorage.getItem("token");
+    let res;
+    if (editId) {
+      res = await fetch(`/api/chapters/${editId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(body),
+      });
+    } else {
+      res = await fetch(`/api/courses/${courseId}/chapters`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(body),
+      });
+    }
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Error saving chapter");
+    fetchChapters();
+    setShowModal(false);
+    resetForm();
   };
 
   // Edit handler
@@ -122,11 +145,12 @@ export default function Chapter() {
     setEditId(chapter.id);
     setTitle(chapter.title);
     setOverview(chapter.overview || "");
-    setCover(chapter.cover || "");
+    setCoverPreview(chapter.cover || "");
     setSortOrder(chapter.sort_order);
     setShowModal(true);
   };
 
+  // Delete handler
   const handleDelete = async (id: string) => {
     if (!window.confirm("Delete this chapter?")) return;
     const token = localStorage.getItem("token");
@@ -143,23 +167,21 @@ export default function Chapter() {
     }
   };
 
+  // Navigasi ke ChapterContents saat card diklik
+  const handleCardClick = (chapterId: string) => {
+    navigate(`/chapter/${chapterId}/contents`);
+  };
+
   return (
     <div className="app">
-      {/* Sidebar */}
       <Sidebar />
-
-      {/* Main content */}
       <div className="main">
-        {/* Navbar */}
         <Navbar userName={userName} onLogout={() => (window.location.href = "/login")} />
 
-        {/* Page Content */}
         <main className="chapter-page">
           <div className="chapter-header">
             <h1>Chapters</h1>
-            <button onClick={() => { resetForm(); setShowModal(true); }}>
-              ➕ Add Chapter
-            </button>
+            <button onClick={() => { resetForm(); setShowModal(true); }}>➕ Add Chapter</button>
           </div>
 
           {loading ? (
@@ -167,50 +189,60 @@ export default function Chapter() {
           ) : (
             <div className="chapter-list">
               {chapters.map((chapter) => (
-                <div key={chapter.id} className="chapter-card">
+                <div
+                  key={chapter.id}
+                  className="chapter-card"
+                  onClick={() => handleCardClick(chapter.id)} // klik card langsung navigasi
+                  style={{ cursor: "pointer" }}
+                >
                   <div>
                     <h3>{chapter.title}</h3>
                     <p>{chapter.overview}</p>
+                    {chapter.cover && <img src={chapter.cover} alt="Cover" style={{ maxWidth: "200px", marginTop: 8 }} />}
                   </div>
                   <div>
-                    <button onClick={() => handleEdit(chapter)}>✏️ Edit</button>
-                    <button onClick={() => handleDelete(chapter.id)}>🗑️ Delete</button>
+                    <button onClick={(e) => { e.stopPropagation(); handleEdit(chapter); }}>✏️ Edit</button>
+                    <button onClick={(e) => { e.stopPropagation(); handleDelete(chapter.id); }}>🗑️ Delete</button>
                   </div>
                 </div>
               ))}
             </div>
           )}
 
-          {/* Modal */}
           {showModal && (
             <div className="modal-overlay">
               <div className="modal">
                 <h2>{editId ? "Edit Chapter" : "Add Chapter"}</h2>
                 <form onSubmit={handleSubmit}>
+                  <label>Title:</label>
                   <input
                     type="text"
-                    placeholder="Title"
                     value={title}
                     onChange={e => setTitle(e.target.value)}
                     required
                   />
+
+                  <label>Overview:</label>
                   <textarea
-                    placeholder="Overview"
                     value={overview}
                     onChange={e => setOverview(e.target.value)}
                   />
+
+                  <label>Cover:</label>
                   <input
-                    type="text"
-                    placeholder="Cover URL"
-                    value={cover}
-                    onChange={e => setCover(e.target.value)}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
                   />
+                  {coverPreview && <img src={coverPreview} alt="Preview" style={{ maxWidth: "200px", marginTop: 8 }} />}
+
+                  <label>Sort Order:</label>
                   <input
                     type="number"
-                    placeholder="Sort Order"
                     value={sortOrder ?? ""}
                     onChange={e => setSortOrder(Number(e.target.value))}
                   />
+
                   <div style={{ marginTop: 16 }}>
                     <button type="submit">{editId ? "Update" : "Add"}</button>
                     <button type="button" onClick={() => { setShowModal(false); resetForm(); }}>

@@ -28,10 +28,10 @@ app.get("api/courses/:courseId/chapters", authMiddleware, getChapters);
 app.put("api/chapters/:chapterId", authMiddleware, updateChapter);
 app.delete("api/chapters/:chapterId", authMiddleware, deleteChapter);
 // courses - chapter contents
-app.post("/chapters/:chapterId/contents", authMiddleware, addChapterContent);
-app.get("/chapters/:chapterId/contents", authMiddleware, getContents);
-app.put("/contents/:contentId", authMiddleware, updateContent);
-app.delete("/contents/:contentId", authMiddleware, deleteContent);
+app.post("/api/chapters/:chapterId/contents", authMiddleware, addChapterContent);
+app.get("/api/chapters/:chapterId/contents", authMiddleware, getContents);
+app.put("/api/contents/:contentId", authMiddleware, updateContent);
+app.delete("/api/contents/:contentId", authMiddleware, deleteContent);
 // affiliates
 app.post("/affiliates/:affiliateId/courses", authMiddleware, addAffiliateCourse);
 app.get("/affiliates/:affiliateId/courses", authMiddleware, listAffiliateCourses);

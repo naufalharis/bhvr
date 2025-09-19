@@ -1,11 +1,13 @@
 // index.tsx
 import React, { useState, useEffect } from "react";
 import ReactDOM from "react-dom/client";
-import { BrowserRouter, Routes, Route, useNavigate, Navigate } from "react-router-dom";
-import Login from "./components/login";
+import { BrowserRouter, Routes, Route, useNavigate, Navigate, useParams } from "react-router-dom";
+
+import Login from "./components/Login";
 import Home from "./components/Home";
 import Register from "./components/Register";
 import Chapter from "./components/Chapter";
+import ChapterContents from "./components/ChapterContent"; // import halaman ChapterContents
 
 function App() {
   // Ambil status login dari localStorage
@@ -68,6 +70,14 @@ function App() {
         }
       />
 
+      {/* Chapter Contents route dengan parameter chapterId */}
+      <Route
+        path="/chapter/:chapterId/contents"
+        element={
+          isLoggedIn ? <ChapterContentsWrapper /> : <Navigate to="/login" replace />
+        }
+      />
+
       {/* Catch all */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
@@ -83,6 +93,13 @@ function RegisterRedirect() {
   };
 
   return <Register onRegister={handleRegister} />;
+}
+
+// Wrapper untuk ChapterContents agar bisa membaca chapterId dari param
+function ChapterContentsWrapper() {
+  const { chapterId } = useParams<{ chapterId: string }>();
+  if (!chapterId) return <div>Chapter ID is missing</div>;
+  return <ChapterContents chapterId={chapterId} />;
 }
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
