@@ -1,13 +1,13 @@
 {
   "compilerOptions": {
     // Environment setup & latest features
-    "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "target": "ESNext",
     "module": "ESNext",
-    "moduleDetection": "force",
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "jsx": "react-jsx",
     "allowJs": true,
 
+    // Module resolution
     // Module resolution
     "moduleResolution": "bundler",
     "allowSyntheticDefaultImports": true,
