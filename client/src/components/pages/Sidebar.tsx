@@ -8,7 +8,7 @@ export default function Sidebar() {
       <nav>
         <ul>
           <li>
-            <a href="#" className="active">Dashboard</a>
+            <a href="/home" className="active">Dashboard</a>
           </li>
           <li><a href="#">📝 Assignments</a></li>
           <li><a href="#">📈 Progress</a></li>

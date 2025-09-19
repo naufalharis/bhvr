@@ -15,6 +15,44 @@
     color: #2c3e50;
   }
   
+  /* Pastikan root dan main full screen */
+  .app {
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+  }
+  
+  .main {
+    flex: 1;
+    height: 100vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-primary, #f8fafc);
+    padding: 0;
+    margin: 0;
+  }
+  
+  .chapter-page {
+    flex: 1;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    box-sizing: border-box;
+    background: var(--bg-primary, #f8fafc);
+  }
+  
+  /* Hilangkan margin/padding pada header dan list jika ada */
+  .chapter-header,
+  .chapter-list {
+    margin: 0;
+    padding: 0;
+  }
+  
   /* Header styles */
   header {
     background: rgba(255, 255, 255, 0.95);
@@ -122,7 +160,6 @@
   }
   
   main > div {
-    background: rgba(255, 255, 255, 0.9);
     backdrop-filter: blur(20px);
     border-radius: 24px;
     padding: 2.5rem;

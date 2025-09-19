@@ -77,26 +77,132 @@ body {
   min-height: 100vh;
 }
 
-/* App layout */
+/* Layout */
 .app {
   display: flex;
   min-height: 100vh;
-  position: relative;
 }
 
+/* Sidebar */
+.sidebar {
+  width: 280px;
+  background: var(--bg-sidebar);
+  padding: 2rem 0;
+  box-shadow: var(--shadow-lg);
+  position: relative;
+  z-index: 10;
+  border-right: 1px solid var(--border-color);
+}
+
+.sidebar h1 {
+  color: var(--text-sidebar);
+  font-size: 1.75rem;
+  font-weight: 800;
+  padding: 0 2rem;
+  margin-bottom: 3rem;
+  background: var(--gradient);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.sidebar nav ul {
+  list-style: none;
+}
+
+.sidebar nav li {
+  margin: 0.5rem 1rem;
+}
+
+.sidebar nav a {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  color: var(--text-sidebar-secondary);
+  text-decoration: none;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  position: relative;
+  overflow: hidden;
+}
+
+.sidebar nav a:hover {
+  color: var(--text-sidebar);
+  background: var(--sidebar-hover-bg);
+  transform: translateX(4px);
+}
+
+.sidebar nav a.active {
+  color: var(--text-sidebar-active);
+  background: var(--sidebar-active-bg);
+  font-weight: 600;
+}
+
+.sidebar nav a.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 24px;
+  background: var(--accent-primary);
+  border-radius: 0 4px 4px 0;
+}
+
+/* Main Content */
 .main {
   flex: 1;
-  margin-left: 280px;
   display: flex;
   flex-direction: column;
-  transition: margin-left 0.3s ease;
+  background: var(--bg-primary);
+}
+
+/* Header */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2rem;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-color);
+  box-shadow: var(--shadow);
+}
+
+.header h2 {
+  color: var(--text-primary);
+  font-size: 2rem;
+  font-weight: 700;
+  background: var(--gradient);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.theme-select {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
 }
 
 /* Content area */
 .content {
   flex: 1;
   padding: 2rem;
-  background: transparent;
+  background: var(--bg-secondary);
 }
 
 /* Cards container */
