@@ -329,9 +329,9 @@ export default function Home({ onLogout }: AppProps) {
     }
   };
 
-  /** Filter course by search */
-  const filteredCourses = courses.filter((c) =>
-    c.title.toLowerCase().includes(searchQuery.toLowerCase())
+  /** Filter product by search */
+  const filteredProducts = products.filter((p) =>
+    p.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -372,20 +372,9 @@ export default function Home({ onLogout }: AppProps) {
               )}
             </div>
 
-            {/* Search Input */}
-            <div className="mb-4">
-              <input
-                type="text"
-                placeholder="Search courses..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-3 py-2 border rounded"
-              />
-            </div>
-
             <div className="course-list">
-              {filteredCourses.length > 0 ? (
-                filteredCourses.map((course) => (
+              {courses.length > 0 ? (
+                courses.map((course) => (
                   <div key={course.id} className="course-card">
                     {course.cover && (
                       <img src={course.cover} alt={course.title} className="course-cover" />
@@ -415,7 +404,7 @@ export default function Home({ onLogout }: AppProps) {
                   </div>
                 ))
               ) : (
-                <p>No courses found.</p>
+                <p>No courses available.</p>
               )}
             </div>
           </div>
