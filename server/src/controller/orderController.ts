@@ -32,12 +32,22 @@ export const addOrderLine = async (c: Context) => {
   try {
     const { order_id, product_id, course_id, status } = await c.req.json();
 
+    if (!order_id || !status) {
+      return c.json({ error: "order_id and status are required" }, 400);
+    }
+
+    // Minimal salah satu harus ada
+    if (!product_id && !course_id) {
+      return c.json({ error: "At least one of product_id or course_id is required" }, 400);
+    }
+
+    // Simpan order line, course_id dan product_id bisa null
     const orderLine = await prisma.orderLine.create({
       data: {
         order_id,
-        product_id,
-        course_id,
-        status: status || "pending",
+        product_id: product_id ?? null,
+        course_id: course_id ?? null,
+        status,
       },
     });
 
@@ -115,6 +125,20 @@ export const getOrderDetails = async (c: Context) => {
     }
 
     return c.json({ order });
+  } catch (error: any) {
+    console.error(error);
+    return c.json({ error: error.message }, 500);
+  }
+};
+
+// === STEP 6: Get Order Lines by Order
+export const getOrderLinesByOrder = async (c: Context) => {
+  try {
+    const { orderId } = c.req.param();
+    const orderLines = await prisma.orderLine.findMany({
+      where: { order_id: orderId },
+    });
+    return c.json({ orderLines });
   } catch (error: any) {
     console.error(error);
     return c.json({ error: error.message }, 500);

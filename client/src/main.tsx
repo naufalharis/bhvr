@@ -10,33 +10,34 @@ import {
   useParams,
 } from "react-router-dom";
 
-import Login from "./components/Login";
+import Login from "./components/login";
 import Home from "./components/Home";
 import Register from "./components/Register";
 import Chapter from "./components/Chapter";
-import ChapterContents from "./components/ChapterContent"; 
+import ChapterContents from "./components/ChapterContent";
 import Chart from "./components/Chart"; // ✅ import halaman Chart
 
 function App() {
-  // default: user belum login
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
+    // baca status login dari localStorage (supaya tetap login saat refresh)
+    return localStorage.getItem("isLoggedIn") === "true";
+  });
 
-  // setiap kali isLoggedIn berubah, update localStorage
   useEffect(() => {
     localStorage.setItem("isLoggedIn", isLoggedIn.toString());
   }, [isLoggedIn]);
 
-  // fungsi logout → clear localStorage & reset state
   const handleLogout = () => {
     localStorage.removeItem("isLoggedIn");
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    localStorage.removeItem("role"); // ✅ pastikan role ikut dibersihkan
     setIsLoggedIn(false);
   };
 
   return (
     <Routes>
-      {/* Default route selalu cek login */}
+      {/* Default route */}
       <Route
         path="/"
         element={
@@ -48,7 +49,7 @@ function App() {
         }
       />
 
-      {/* Login route */}
+      {/* Login */}
       <Route
         path="/login"
         element={
@@ -60,43 +61,47 @@ function App() {
         }
       />
 
-      {/* Register route */}
+      {/* Register */}
       <Route path="/register" element={<RegisterRedirect />} />
 
-      {/* Home route */}
+      {/* Home */}
       <Route
         path="/home"
         element={
-          isLoggedIn ? (
+          <ProtectedRoute isLoggedIn={isLoggedIn}>
             <Home onLogout={handleLogout} />
-          ) : (
-            <Navigate to="/login" replace />
-          )
+          </ProtectedRoute>
         }
       />
 
-      {/* Chapter route dengan parameter id */}
+      {/* Chapter */}
       <Route
         path="/chapter/:id"
-        element={isLoggedIn ? <Chapter /> : <Navigate to="/login" replace />}
+        element={
+          <ProtectedRoute isLoggedIn={isLoggedIn}>
+            <Chapter />
+          </ProtectedRoute>
+        }
       />
 
-      {/* Chapter Contents route dengan parameter chapterId */}
+      {/* Chapter Contents */}
       <Route
         path="/chapter/:chapterId/contents"
         element={
-          isLoggedIn ? (
+          <ProtectedRoute isLoggedIn={isLoggedIn}>
             <ChapterContentsWrapper />
-          ) : (
-            <Navigate to="/login" replace />
-          )
+          </ProtectedRoute>
         }
       />
 
-      {/* ✅ Chart route */}
+      {/* Chart */}
       <Route
         path="/chart"
-        element={isLoggedIn ? <Chart /> : <Navigate to="/login" replace />}
+        element={
+          <ProtectedRoute isLoggedIn={isLoggedIn}>
+            <Chart />
+          </ProtectedRoute>
+        }
       />
 
       {/* Catch all */}
@@ -105,18 +110,30 @@ function App() {
   );
 }
 
-// Wrapper Register agar bisa redirect setelah sukses
+// ✅ Wrapper agar hanya bisa diakses saat login
+function ProtectedRoute({
+  isLoggedIn,
+  children,
+}: {
+  isLoggedIn: boolean;
+  children: React.ReactNode;
+}) {
+  if (!isLoggedIn) {
+    return <Navigate to="/login" replace />;
+  }
+  return <>{children}</>;
+}
+
+// ✅ Wrapper Register agar redirect ke login setelah register
 function RegisterRedirect() {
   const navigate = useNavigate();
-
   const handleRegister = () => {
     navigate("/login");
   };
-
   return <Register onRegister={handleRegister} />;
 }
 
-// Wrapper untuk ChapterContents agar bisa membaca chapterId dari param
+// ✅ Wrapper ChapterContents agar bisa ambil param
 function ChapterContentsWrapper() {
   const { chapterId } = useParams<{ chapterId: string }>();
   if (!chapterId) return <div>Chapter ID is missing</div>;
