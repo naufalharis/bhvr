@@ -319,6 +319,7 @@ body.vscode-theme, .vscode-theme body {
   font-size: 1.75rem;
   font-weight: 700;
   margin-bottom: 1.5rem;
+  padding-left: 70px;
 }
 
 .flex {
@@ -388,6 +389,7 @@ body.vscode-theme, .vscode-theme body {
   border: 1px solid var(--border-color);
   transition: all 0.3s ease;
   position: relative;
+  margin-left: 50px; /* geser sedikit ke kanan */
 }
 
 .course-card:hover {
@@ -406,6 +408,8 @@ body.vscode-theme, .vscode-theme body {
 /* Course Info */
 .course-info {
   padding: 1.5rem;
+  max-height: 200px; /* card tidak akan melebihi tinggi ini */
+  overflow: hidden;
 }
 
 .course-info h3 {
@@ -552,7 +556,10 @@ body.vscode-theme, .vscode-theme body {
 }
 
 .mt-2 {
-  margin-top: 0.5rem;
+  padding: 0.25rem 0.5rem; /* lebih kecil dari default */
+  font-size: 0.75rem;      /* teks lebih kecil */
+  border-radius: 4px;      /* sudut kecil */
+  margin-top: 0.5rem;      /* sesuai .mt-2 */
 }
 
 .modal img {
@@ -760,6 +767,6 @@ a:focus {
   grid-column: 1 / -1;
   text-align: center;
   color: var(--text-secondary);
-  font-size: 1.1rem;
+  font-size: 0.8rem;
   padding: 2rem;
 }
