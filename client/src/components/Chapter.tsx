@@ -13,11 +13,18 @@ interface Chapter {
   sort_order?: number;
 }
 
+interface User {
+  id: string;
+  first_name: string;
+  username: string;
+  role: string; // instructor | student
+}
+
 export default function Chapter() {
   const { id: courseId } = useParams<{ id: string }>();
-  const navigate = useNavigate(); // Tambahkan useNavigate
+  const navigate = useNavigate();
 
-  const [userName, setUserName] = useState<string>("");
+  const [user, setUser] = useState<User | null>(null);
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -49,13 +56,12 @@ export default function Chapter() {
   };
 
   useEffect(() => {
-    const user = localStorage.getItem("user");
-    if (user) {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
       try {
-        const parsed = JSON.parse(user);
-        setUserName(parsed.first_name || parsed.username || "User");
+        setUser(JSON.parse(storedUser));
       } catch {
-        setUserName("User");
+        setUser(null);
       }
     }
     fetchChapters();
@@ -83,7 +89,7 @@ export default function Chapter() {
     }
   };
 
-  // Submit handler
+  // Submit handler (instructor only)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const token = localStorage.getItem("token");
@@ -140,7 +146,7 @@ export default function Chapter() {
     resetForm();
   };
 
-  // Edit handler
+  // Edit handler (instructor only)
   const handleEdit = (chapter: Chapter) => {
     setEditId(chapter.id);
     setTitle(chapter.title);
@@ -150,7 +156,7 @@ export default function Chapter() {
     setShowModal(true);
   };
 
-  // Delete handler
+  // Delete handler (instructor only)
   const handleDelete = async (id: string) => {
     if (!window.confirm("Delete this chapter?")) return;
     const token = localStorage.getItem("token");
@@ -176,12 +182,24 @@ export default function Chapter() {
     <div className="app">
       <Sidebar />
       <div className="main">
-        <Navbar userName={userName} onLogout={() => (window.location.href = "/login")} />
+        <Navbar
+          userName={user ? user.first_name || user.username : "User"}
+          onLogout={() => (window.location.href = "/login")}
+        />
 
         <main className="chapter-page">
           <div className="chapter-header">
             <h1>Chapters</h1>
-            <button onClick={() => { resetForm(); setShowModal(true); }}>➕ Add Chapter</button>
+            {user?.role === "instructor" && (
+              <button
+                onClick={() => {
+                  resetForm();
+                  setShowModal(true);
+                }}
+              >
+                ➕ Add Chapter
+              </button>
+            )}
           </div>
 
           {loading ? (
@@ -192,24 +210,49 @@ export default function Chapter() {
                 <div
                   key={chapter.id}
                   className="chapter-card"
-                  onClick={() => handleCardClick(chapter.id)} // klik card langsung navigasi
+                  onClick={() => handleCardClick(chapter.id)}
                   style={{ cursor: "pointer" }}
                 >
                   <div>
                     <h3>{chapter.title}</h3>
                     <p>{chapter.overview}</p>
-                    {chapter.cover && <img src={chapter.cover} alt="Cover" style={{ maxWidth: "200px", marginTop: 8 }} />}
+                    {chapter.cover && (
+                      <img
+                        src={chapter.cover}
+                        alt="Cover"
+                        style={{ maxWidth: "200px", marginTop: 8 }}
+                      />
+                    )}
                   </div>
-                  <div>
-                    <button onClick={(e) => { e.stopPropagation(); handleEdit(chapter); }}>✏️ Edit</button>
-                    <button onClick={(e) => { e.stopPropagation(); handleDelete(chapter.id); }}>🗑️ Delete</button>
-                  </div>
+
+                  {/* tombol hanya untuk instructor */}
+                  {user?.role === "instructor" && (
+                    <div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEdit(chapter);
+                        }}
+                      >
+                        ✏️ Edit
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(chapter.id);
+                        }}
+                      >
+                        🗑️ Delete
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
           )}
 
-          {showModal && (
+          {/* Modal (instructor only) */}
+          {showModal && user?.role === "instructor" && (
             <div className="modal-overlay">
               <div className="modal">
                 <h2>{editId ? "Edit Chapter" : "Add Chapter"}</h2>
@@ -218,14 +261,14 @@ export default function Chapter() {
                   <input
                     type="text"
                     value={title}
-                    onChange={e => setTitle(e.target.value)}
+                    onChange={(e) => setTitle(e.target.value)}
                     required
                   />
 
                   <label>Overview:</label>
                   <textarea
                     value={overview}
-                    onChange={e => setOverview(e.target.value)}
+                    onChange={(e) => setOverview(e.target.value)}
                   />
 
                   <label>Cover:</label>
@@ -234,18 +277,32 @@ export default function Chapter() {
                     accept="image/*"
                     onChange={handleFileChange}
                   />
-                  {coverPreview && <img src={coverPreview} alt="Preview" style={{ maxWidth: "200px", marginTop: 8 }} />}
+                  {coverPreview && (
+                    <img
+                      src={coverPreview}
+                      alt="Preview"
+                      style={{ maxWidth: "200px", marginTop: 8 }}
+                    />
+                  )}
 
                   <label>Sort Order:</label>
                   <input
                     type="number"
                     value={sortOrder ?? ""}
-                    onChange={e => setSortOrder(Number(e.target.value))}
+                    onChange={(e) => setSortOrder(Number(e.target.value))}
                   />
 
                   <div style={{ marginTop: 16 }}>
-                    <button type="submit">{editId ? "Update" : "Add"}</button>
-                    <button type="button" onClick={() => { setShowModal(false); resetForm(); }}>
+                    <button type="submit">
+                      {editId ? "Update" : "Add"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowModal(false);
+                        resetForm();
+                      }}
+                    >
                       Cancel
                     </button>
                   </div>

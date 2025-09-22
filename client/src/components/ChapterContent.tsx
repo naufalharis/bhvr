@@ -1,4 +1,4 @@
-// ChapterContent.tsx
+// src/components/ChapterContents.tsx
 import React, { useEffect, useState } from "react";
 import Navbar from "./pages/Navbar";
 import Sidebar from "./pages/Sidebar";
@@ -26,7 +26,25 @@ export default function ChapterContents({ chapterId }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
+  const [userRole, setUserRole] = useState<string>("student");
+  const [userName, setUserName] = useState<string>("User");
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null); // dropdown aktif
   const token = localStorage.getItem("token");
+
+  // Ambil role dari localStorage
+  useEffect(() => {
+    const user = localStorage.getItem("user");
+    if (user) {
+      try {
+        const parsed = JSON.parse(user);
+        setUserRole(parsed.role || "student");
+        setUserName(parsed.first_name || parsed.username || "User");
+      } catch {
+        setUserRole("student");
+        setUserName("User");
+      }
+    }
+  }, []);
 
   // Fetch contents
   const fetchContents = async () => {
@@ -56,7 +74,7 @@ export default function ChapterContents({ chapterId }: Props) {
     setForm({ ...form, [e.target.name]: value });
   };
 
-  // Handle file input for cover only (convert to base64 for preview & send)
+  // Handle file input for cover only
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -127,28 +145,35 @@ export default function ChapterContents({ chapterId }: Props) {
     }
   };
 
+  // Toggle dropdown
+  const toggleDropdown = (type: string) => {
+    setOpenDropdown((prev) => (prev === type ? null : type));
+  };
+
   return (
     <div className="app">
       <Sidebar />
       <div className="main">
-        <Navbar userName={"User"} onLogout={() => (window.location.href = "/login")} />
+        <Navbar userName={userName} onLogout={() => (window.location.href = "/login")} />
         <main className="chapter-page">
           <div className="chapter-header">
             <h1>Chapter Contents</h1>
-            <button
-              onClick={() => {
-                setEditingId(null);
-                setForm({});
-                setModalOpen(true);
-              }}
-              style={{ marginLeft: "1rem" }}
-            >
-              ➕ Add Content
-            </button>
+            {userRole === "instructor" && (
+              <button
+                onClick={() => {
+                  setEditingId(null);
+                  setForm({});
+                  setModalOpen(true);
+                }}
+                style={{ marginLeft: "1rem" }}
+              >
+                ➕ Add Content
+              </button>
+            )}
           </div>
 
           {/* Modal Form */}
-          {modalOpen && (
+          {modalOpen && userRole === "instructor" && (
             <div className="modal-overlay">
               <div className="modal">
                 <h2>{editingId ? "Edit Content" : "Add Content"}</h2>
@@ -178,11 +203,7 @@ export default function ChapterContents({ chapterId }: Props) {
                     <option value="slide">Slide</option>
                     <option value="download">Download</option>
                   </select>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileChange}
-                  />
+                  <input type="file" accept="image/*" onChange={handleFileChange} />
                   {form.cover && (
                     <img src={form.cover} alt="cover" style={{ width: 100, margin: 4 }} />
                   )}
@@ -228,63 +249,99 @@ export default function ChapterContents({ chapterId }: Props) {
             </div>
           )}
 
-          {/* Card layout */}
-          <div className="contents-grid">
-            {/* Video section */}
-            {contents
-              .filter((c) => c.content_type === "video")
-              .map((c) => (
-                <div key={c.id} className="content-card">
-                  {c.cover && (
-                    <img
-                      src={c.cover}
-                      alt={c.title}
-                      style={{ width: "100%", cursor: "pointer" }}
-                      onClick={() => c.path && window.open(c.path, "_blank")}
-                    />
-                  )}
-                  <h3>{c.title}</h3>
-                  <p>{c.overview}</p>
-                  <div className="card-actions">
-                    <button onClick={() => handleEdit(c)}>Edit</button>
-                    <button onClick={() => handleDelete(c.id)}>Delete</button>
-                  </div>
+          {/* Dropdown Sections */}
+          <div className="contents-dropdowns">
+            {/* Video Dropdown */}
+            <div className="dropdown-section">
+              <button
+                className="dropdown-btn"
+                onClick={() => toggleDropdown("video")}
+              >
+                🎬 Video ({contents.filter((c) => c.content_type === "video").length})
+              </button>
+              {openDropdown === "video" && (
+                <div className="dropdown-content">
+                  {contents
+                    .filter((c) => c.content_type === "video")
+                    .map((c) => (
+                      <div key={c.id} className="content-card">
+                        {c.cover && (
+                          <img
+                            src={c.cover}
+                            alt={c.title}
+                            style={{ width: "100%", cursor: "pointer" }}
+                            onClick={() => c.path && window.open(c.path, "_blank")}
+                          />
+                        )}
+                        <h3>{c.title}</h3>
+                        <p>{c.overview}</p>
+                        {userRole === "instructor" && (
+                          <div className="card-actions">
+                            <button onClick={() => handleEdit(c)}>Edit</button>
+                            <button onClick={() => handleDelete(c.id)}>Delete</button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
                 </div>
-              ))}
+              )}
+            </div>
 
-            {/* Slides section (horizontal scroll) */}
-            {contents.some((c) => c.content_type === "slide") && (
-              <div className="slides-scroll">
-                {contents
-                  .filter((c) => c.content_type === "slide")
-                  .map((c) => (
-                    <img
-                      key={c.id}
-                      src={c.cover || c.path}
-                      alt={c.title}
-                      className="slide-img"
-                      title={c.title}
-                    />
-                  ))}
-              </div>
-            )}
-
-            {/* Download section */}
-            {contents
-              .filter((c) => c.content_type === "download")
-              .map((c) => (
-                <div key={c.id} className="content-card">
-                  <a href={c.path} download={c.original_file_name}>
-                    Download {c.original_file_name || c.title}
-                  </a>
-                  <h3>{c.title}</h3>
-                  <p>{c.overview}</p>
-                  <div className="card-actions">
-                    <button onClick={() => handleEdit(c)}>Edit</button>
-                    <button onClick={() => handleDelete(c.id)}>Delete</button>
-                  </div>
+            {/* Slide Dropdown */}
+            <div className="dropdown-section">
+              <button
+                className="dropdown-btn"
+                onClick={() => toggleDropdown("slide")}
+              >
+                📑 Slides ({contents.filter((c) => c.content_type === "slide").length})
+              </button>
+              {openDropdown === "slide" && (
+                <div className="dropdown-content slides-scroll">
+                  {contents
+                    .filter((c) => c.content_type === "slide")
+                    .map((c) => (
+                      <img
+                        key={c.id}
+                        src={c.cover || c.path}
+                        alt={c.title}
+                        className="slide-img"
+                        title={c.title}
+                      />
+                    ))}
                 </div>
-              ))}
+              )}
+            </div>
+
+            {/* Download Dropdown */}
+            <div className="dropdown-section">
+              <button
+                className="dropdown-btn"
+                onClick={() => toggleDropdown("download")}
+              >
+                📥 Downloads ({contents.filter((c) => c.content_type === "download").length})
+              </button>
+              {openDropdown === "download" && (
+                <div className="dropdown-content">
+                  {contents
+                    .filter((c) => c.content_type === "download")
+                    .map((c) => (
+                      <div key={c.id} className="content-card">
+                        <a href={c.path} download={c.original_file_name}>
+                          Download {c.original_file_name || c.title}
+                        </a>
+                        <h3>{c.title}</h3>
+                        <p>{c.overview}</p>
+                        {userRole === "instructor" && (
+                          <div className="card-actions">
+                            <button onClick={() => handleEdit(c)}>Edit</button>
+                            <button onClick={() => handleDelete(c.id)}>Delete</button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                </div>
+              )}
+            </div>
           </div>
         </main>
       </div>

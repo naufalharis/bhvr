@@ -1,6 +1,7 @@
 // src/components/Register.tsx
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
 import "../styles/register.css";
 
 interface Props {
@@ -16,7 +17,6 @@ export default function Register({ onRegister }: Props) {
     birthDate: "",
     birthPlace: "",
     username: "",
-    role: "",
     email: "",
     password: "",
   });
@@ -39,7 +39,7 @@ export default function Register({ onRegister }: Props) {
     e.preventDefault();
     setLoading(true);
 
-    // mapping ke format backend (Prisma/Hono)
+    // mapping ke format backend (Prisma/Hono) + set default role = student
     const payload = {
       first_name: formData.firstName,
       last_name: formData.lastName,
@@ -48,9 +48,9 @@ export default function Register({ onRegister }: Props) {
       birth_date: formData.birthDate ? new Date(formData.birthDate) : null,
       birth_place: formData.birthPlace,
       username: formData.username,
-      role: formData.role,
       email: formData.email,
       password: formData.password, // hash di backend
+      role: "student", // 👈 default role student
     };
 
     try {
@@ -78,7 +78,9 @@ export default function Register({ onRegister }: Props) {
 
       if (!res.ok) {
         const errMsg =
-          data?.error || data?.message || `Request failed with status ${res.status}`;
+          data?.error ||
+          data?.message ||
+          `Request failed with status ${res.status}`;
         throw new Error(errMsg);
       }
 
@@ -213,23 +215,6 @@ export default function Register({ onRegister }: Props) {
               required
             />
           </div>
-
-          <div className="form-group">
-            <label htmlFor="role">Role</label>
-            <select
-              id="role"
-              name="role"
-              className="form-control"
-              value={formData.role}
-              onChange={handleChange}
-              required
-            >
-              <option value="">Pilih role</option>
-              <option value="user">User</option>
-              <option value="affiliate">Affiliate</option>
-              <option value="instructor">Instructor</option>
-            </select>
-          </div>
         </div>
 
         <div className="form-group full-width">
@@ -265,7 +250,7 @@ export default function Register({ onRegister }: Props) {
               className="toggle-password"
               onClick={togglePassword}
             >
-              👁️
+              {showPassword ? <AiFillEyeInvisible /> : <AiFillEye />}
             </button>
           </div>
         </div>

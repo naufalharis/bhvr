@@ -1,8 +1,9 @@
+// src/components/Home.tsx
 import React, { useEffect, useState } from "react";
 import Sidebar from "./pages/Sidebar";
 import Navbar from "./pages/Navbar";
 import "../styles/home.css";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 interface AppProps {
   onLogout: () => void;
@@ -14,6 +15,7 @@ interface User {
   last_name?: string;
   email: string;
   username: string;
+  role: string; // instructor | student
 }
 
 interface Course {
@@ -29,17 +31,25 @@ export default function Home({ onLogout }: AppProps) {
   const [user, setUser] = useState<User | null>(null);
   const [courses, setCourses] = useState<Course[]>([]);
   const [showModal, setShowModal] = useState(false);
+  const [showOrderModal, setShowOrderModal] = useState(false);
 
+  // form course
   const [courseId, setCourseId] = useState<string | null>(null);
   const [courseTitle, setCourseTitle] = useState("");
   const [overview, setOverview] = useState("");
-  const [courseType, setCourseType] = useState("");
+  const [courseType, setCourseType] = useState("single"); // default
   const [courseSlug, setCourseSlug] = useState("");
   const [coverImage, setCoverImage] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // form order
+  const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
+  const [orderDate, setOrderDate] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+
   const token = localStorage.getItem("token");
+  const navigate = useNavigate();
 
   /** Ambil user dari localStorage */
   useEffect(() => {
@@ -60,7 +70,13 @@ export default function Home({ onLogout }: AppProps) {
       const res = await fetch("/api/courses", {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) throw new Error("Gagal mengambil course");
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        console.error("Failed to fetch courses:", err.error || res.statusText);
+        return;
+      }
+
       const data: Course[] = await res.json();
       setCourses(data);
     } catch (error) {
@@ -99,11 +115,16 @@ export default function Home({ onLogout }: AppProps) {
       reader.onerror = (error) => reject(error);
     });
 
-  /** Submit form */
+  /** Submit form (Create/Update Course) */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!courseTitle || !overview || !courseType || !courseSlug) {
+    if (!courseTitle || !overview || !courseSlug) {
       alert("Please fill all fields.");
+      return;
+    }
+
+    if (user?.role !== "instructor") {
+      alert("Hanya instructor yang bisa mengelola course.");
       return;
     }
 
@@ -115,15 +136,14 @@ export default function Home({ onLogout }: AppProps) {
       if (coverImage) {
         coverBase64 = await fileToBase64(coverImage);
       } else if (coverPreview && !coverPreview.startsWith("blob:")) {
-        // kalau preview dari server (edit mode)
         coverBase64 = coverPreview;
       }
 
       const body = {
         title: courseTitle,
         overview,
-        cover: coverBase64,
-        course_type: courseType,
+        cover: coverBase64 || "",
+        course_type: courseType || "single",
         slug: courseSlug,
       };
 
@@ -161,7 +181,7 @@ export default function Home({ onLogout }: AppProps) {
     setCourseId(null);
     setCourseTitle("");
     setOverview("");
-    setCourseType("");
+    setCourseType("single");
     setCourseSlug("");
     setCoverImage(null);
     setCoverPreview(null);
@@ -170,6 +190,12 @@ export default function Home({ onLogout }: AppProps) {
   /** Delete course */
   const handleDelete = async (id: string) => {
     if (!token) return;
+
+    if (user?.role !== "instructor") {
+      alert("Hanya instructor yang bisa menghapus course.");
+      return;
+    }
+
     if (!window.confirm("Are you sure you want to delete this course?")) return;
 
     try {
@@ -187,14 +213,90 @@ export default function Home({ onLogout }: AppProps) {
 
   /** Edit course */
   const handleEdit = (course: Course) => {
+    if (user?.role !== "instructor") {
+      alert("Hanya instructor yang bisa edit course.");
+      return;
+    }
     setCourseId(course.id);
     setCourseTitle(course.title);
     setOverview(course.overview);
-    setCourseType(course.course_type);
+    setCourseType(course.course_type || "single");
     setCourseSlug(course.slug);
-    setCoverPreview(course.cover); // preview dari API
+    setCoverPreview(course.cover);
     setShowModal(true);
   };
+
+  /** Toggle select course untuk order */
+  const toggleSelectCourse = (id: string) => {
+    setSelectedCourses((prev) =>
+      prev.includes(id) ? prev.filter((cid) => cid !== id) : [...prev, id]
+    );
+  };
+
+  /** Submit order ke backend */
+  const handleOrderSubmit = async () => {
+    if (!token || !user) return;
+
+    if (selectedCourses.length === 0) {
+      alert("Pilih minimal satu course untuk order.");
+      return;
+    }
+    if (!orderDate) {
+      alert("Pilih tanggal order terlebih dahulu.");
+      return;
+    }
+
+    try {
+      // Step 1: Buat order
+      const resOrder = await fetch("/api/orders", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status: "pending", order_date: orderDate }),
+      });
+
+      if (!resOrder.ok) {
+        const err = await resOrder.json().catch(() => ({}));
+        throw new Error(err.error || "Gagal membuat order");
+      }
+
+      const orderData = await resOrder.json();
+      const orderId = orderData.order.id;
+
+      // Step 2: Tambahkan order lines untuk setiap course ke API baru
+      for (const cId of selectedCourses) {
+        await fetch("/api/order-lines", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            order_id: orderId,
+            product_id: cId,
+            course_id: cId,
+            status: "pending",
+          }),
+        });
+      }
+
+      alert("Order berhasil dibuat!");
+      setSelectedCourses([]);
+      setOrderDate("");
+      setShowOrderModal(false);
+      navigate("/chart");
+    } catch (err: any) {
+      console.error("Order submit error:", err);
+      alert(`Error membuat order: ${err.message}`);
+    }
+  };
+
+  /** Filter course by search */
+  const filteredCourses = courses.filter((c) =>
+    c.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div className="app">
@@ -205,23 +307,35 @@ export default function Home({ onLogout }: AppProps) {
           {/* Profile Card */}
           <div className="profile-card">
             <h3>{user ? user.first_name : "Loading..."}</h3>
-            <p>View your profile and settings</p>
+            <p>Role: {user?.role || "Unknown"}</p>
             <button>View Profile</button>
           </div>
 
-          {/* Courses */}
+          {/* Courses Section */}
           <div className="courses-section">
             <div className="flex justify-between items-center mb-4">
               <h2>Your Courses</h2>
-              <button
-                className="px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600"
-                onClick={() => {
-                  resetForm();
-                  setShowModal(true);
-                }}
-              >
-                ➕ Add New Course
-              </button>
+
+              {user?.role === "instructor" && (
+                <button
+                  className="px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600"
+                  onClick={() => {
+                    resetForm();
+                    setShowModal(true);
+                  }}
+                >
+                  ➕ Add New Course
+                </button>
+              )}
+
+              {user?.role === "student" && (
+                <button
+                  className="px-4 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600"
+                  onClick={() => setShowOrderModal(true)}
+                >
+                  🛒 Order Course
+                </button>
+              )}
             </div>
 
             <div className="course-list">
@@ -236,20 +350,23 @@ export default function Home({ onLogout }: AppProps) {
                         <h3>{course.title}</h3>
                       </Link>
                       <p>{course.overview}</p>
-                      <div className="flex space-x-2 mt-2">
-                        <button
-                          className="px-3 py-1 bg-green-500 text-white rounded"
-                          onClick={() => handleEdit(course)}
-                        >
-                          ✏️ Edit
-                        </button>
-                        <button
-                          className="px-3 py-1 bg-red-500 text-white rounded"
-                          onClick={() => handleDelete(course.id)}
-                        >
-                          🗑️ Delete
-                        </button>
-                      </div>
+
+                      {user?.role === "instructor" && (
+                        <div className="flex space-x-2 mt-2">
+                          <button
+                            className="px-3 py-1 bg-green-500 text-white rounded"
+                            onClick={() => handleEdit(course)}
+                          >
+                            ✏️ Edit
+                          </button>
+                          <button
+                            className="px-3 py-1 bg-red-500 text-white rounded"
+                            onClick={() => handleDelete(course.id)}
+                          >
+                            🗑️ Delete
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))
@@ -261,63 +378,116 @@ export default function Home({ onLogout }: AppProps) {
         </main>
       </div>
 
-      {/* Modal */}
-      {showModal && (
+      {/* Modal Order */}
+      {showOrderModal && user?.role === "student" && (
         <div className="modal-overlay">
           <div className="modal">
-            <h2 className="mb-4">{courseId ? "Edit Course" : "Create New Course"}</h2>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label>Course Title</label>
-                <input
-                  type="text"
-                  value={courseTitle}
-                  onChange={(e) => setCourseTitle(e.target.value)}
-                  required
-                />
-              </div>
+            <h2 className="mb-4">Order Courses</h2>
 
-              <div>
-                <label>Overview</label>
-                <textarea
-                  value={overview}
-                  onChange={(e) => setOverview(e.target.value)}
-                  required
-                />
-              </div>
+            {/* Search */}
+            <input
+              type="text"
+              placeholder="Search course..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full px-2 py-1 border rounded mb-3"
+            />
 
-              <div>
-                <label>Course Type</label>
-                <select
-                  value={courseType}
-                  onChange={(e) => setCourseType(e.target.value)}
-                  required
-                >
-                  <option value="">Select type</option>
-                  <option value="single">Single</option>
-                  <option value="bundle">Bundle</option>
-                </select>
-              </div>
+            {/* Order Date */}
+            <div className="mb-3">
+              <label className="block mb-1">Tanggal Order</label>
+              <input
+                type="date"
+                value={orderDate}
+                onChange={(e) => setOrderDate(e.target.value)}
+                className="w-full px-2 py-1 border rounded"
+                required
+              />
+            </div>
 
-              <div>
-                <label>Course Slug</label>
-                <input
-                  type="text"
-                  value={courseSlug}
-                  onChange={(e) => setCourseSlug(e.target.value)}
-                  required
-                />
-              </div>
+            <div className="space-y-2 max-h-60 overflow-y-auto">
+              {filteredCourses.map((course) => (
+                <div key={course.id} className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={selectedCourses.includes(course.id)}
+                    onChange={() => toggleSelectCourse(course.id)}
+                  />
+                  <span>{course.title}</span>
+                </div>
+              ))}
+              {filteredCourses.length === 0 && <p>No courses found.</p>}
+            </div>
 
-              <div>
-                <label>Cover Image</label>
-                <input type="file" accept="image/*" onChange={handleFileChange} />
-                {coverPreview && (
-                  <img src={coverPreview} alt="Cover Preview" className="w-full mt-2" />
-                )}
-              </div>
+            <div className="flex justify-end space-x-2 mt-4">
+              <button
+                type="button"
+                className="px-4 py-2 bg-gray-300 rounded"
+                onClick={() => setShowOrderModal(false)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="px-4 py-2 bg-green-500 text-white rounded"
+                onClick={handleOrderSubmit}
+              >
+                ✅ Submit Order
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
-              <div className="flex justify-end space-x-2 mt-4">
+      {/* Modal Add/Edit Course */}
+      {showModal && user?.role === "instructor" && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <h2 className="mb-4">{courseId ? "Edit Course" : "Add New Course"}</h2>
+            <form onSubmit={handleSubmit} className="space-y-3">
+              <input
+                type="text"
+                placeholder="Course Title"
+                value={courseTitle}
+                onChange={(e) => setCourseTitle(e.target.value)}
+                className="w-full px-2 py-1 border rounded"
+                required
+              />
+              <textarea
+                placeholder="Overview"
+                value={overview}
+                onChange={(e) => setOverview(e.target.value)}
+                className="w-full px-2 py-1 border rounded"
+                required
+              />
+              <input
+                type="text"
+                placeholder="Slug"
+                value={courseSlug}
+                onChange={(e) => setCourseSlug(e.target.value)}
+                className="w-full px-2 py-1 border rounded"
+                required
+              />
+              <select
+                value={courseType}
+                onChange={(e) => setCourseType(e.target.value)}
+                className="w-full px-2 py-1 border rounded"
+                required
+              >
+                <option value="single">Single</option>
+                <option value="bundle">Bundle</option>
+              </select>
+
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                className="w-full"
+              />
+              {coverPreview && (
+                <img src={coverPreview} alt="Preview" className="w-32 h-32 object-cover mt-2" />
+              )}
+              <div className="flex justify-end space-x-2">
                 <button
                   type="button"
                   className="px-4 py-2 bg-gray-300 rounded"

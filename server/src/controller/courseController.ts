@@ -37,17 +37,22 @@ export const createCourse = async (c: HonoContext) => {
   }
 };
 
+//nambahin kode untuk student
+
 export const getCourses = async (c: Context) => {
   const user = c.get("user");
-  if (!user || user.role !== "instructor") return c.json({ error: "Unauthorized" }, 401);
+  if (!user) return c.json({ error: "Unauthorized" }, 401);
 
-  const instructor = await prisma.instructor.findUnique({ where: { user_id: user.id } });
-  if (!instructor) return c.json({ error: "Instructor not found" }, 404);
+  let courses;
+  if (user.role === "instructor") {
+    const instructor = await prisma.instructor.findUnique({ where: { user_id: user.id } });
+    if (!instructor) return c.json({ error: "Instructor not found" }, 404);
+    courses = await prisma.course.findMany({ where: { instructor_id: instructor.id }, include: { chapters: true } });
+  } else {
+    // student → bisa lihat semua courses
+    courses = await prisma.course.findMany({ include: { chapters: true } });
+  }
 
-  const courses = await prisma.course.findMany({
-    where: { instructor_id: instructor.id },
-    include: { chapters: true },
-  });
   return c.json(courses);
 };
 

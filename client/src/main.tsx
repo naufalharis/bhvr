@@ -1,29 +1,42 @@
 // index.tsx
 import React, { useState, useEffect } from "react";
 import ReactDOM from "react-dom/client";
-import { BrowserRouter, Routes, Route, useNavigate, Navigate, useParams } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  useNavigate,
+  Navigate,
+  useParams,
+} from "react-router-dom";
 
 import Login from "./components/Login";
 import Home from "./components/Home";
 import Register from "./components/Register";
 import Chapter from "./components/Chapter";
-import ChapterContents from "./components/ChapterContent"; // import halaman ChapterContents
+import ChapterContents from "./components/ChapterContent"; 
+import Chart from "./components/Chart"; // ✅ import halaman Chart
 
 function App() {
-  // Ambil status login dari localStorage
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
-    const stored = localStorage.getItem("isLoggedIn");
-    return stored === "true";
-  });
+  // default: user belum login
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
 
-  // Simpan status login ke localStorage saat berubah
+  // setiap kali isLoggedIn berubah, update localStorage
   useEffect(() => {
     localStorage.setItem("isLoggedIn", isLoggedIn.toString());
   }, [isLoggedIn]);
 
+  // fungsi logout → clear localStorage & reset state
+  const handleLogout = () => {
+    localStorage.removeItem("isLoggedIn");
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    setIsLoggedIn(false);
+  };
+
   return (
     <Routes>
-      {/* Default route */}
+      {/* Default route selalu cek login */}
       <Route
         path="/"
         element={
@@ -55,7 +68,7 @@ function App() {
         path="/home"
         element={
           isLoggedIn ? (
-            <Home onLogout={() => setIsLoggedIn(false)} />
+            <Home onLogout={handleLogout} />
           ) : (
             <Navigate to="/login" replace />
           )
@@ -65,17 +78,25 @@ function App() {
       {/* Chapter route dengan parameter id */}
       <Route
         path="/chapter/:id"
-        element={
-          isLoggedIn ? <Chapter /> : <Navigate to="/login" replace />
-        }
+        element={isLoggedIn ? <Chapter /> : <Navigate to="/login" replace />}
       />
 
       {/* Chapter Contents route dengan parameter chapterId */}
       <Route
         path="/chapter/:chapterId/contents"
         element={
-          isLoggedIn ? <ChapterContentsWrapper /> : <Navigate to="/login" replace />
+          isLoggedIn ? (
+            <ChapterContentsWrapper />
+          ) : (
+            <Navigate to="/login" replace />
+          )
         }
+      />
+
+      {/* ✅ Chart route */}
+      <Route
+        path="/chart"
+        element={isLoggedIn ? <Chart /> : <Navigate to="/login" replace />}
       />
 
       {/* Catch all */}
