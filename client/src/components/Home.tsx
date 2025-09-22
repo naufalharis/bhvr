@@ -27,23 +27,35 @@ interface Course {
   course_type: string;
 }
 
+interface Product {
+  id: string;
+  title: string;
+  overview: string;
+  cover: string;
+  product_type: string;
+  price: number;
+  course_id: string | null;
+}
+
 export default function Home({ onLogout }: AppProps) {
   const [user, setUser] = useState<User | null>(null);
   const [courses, setCourses] = useState<Course[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [showOrderModal, setShowOrderModal] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   // form course
   const [courseId, setCourseId] = useState<string | null>(null);
   const [courseTitle, setCourseTitle] = useState("");
   const [overview, setOverview] = useState("");
-  const [courseType, setCourseType] = useState("single"); // default
+  const [courseType, setCourseType] = useState("single");
   const [courseSlug, setCourseSlug] = useState("");
   const [coverImage, setCoverImage] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
 
   // form order
+  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
   const [orderDate, setOrderDate] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -70,13 +82,7 @@ export default function Home({ onLogout }: AppProps) {
       const res = await fetch("/api/courses", {
         headers: { Authorization: `Bearer ${token}` },
       });
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        console.error("Failed to fetch courses:", err.error || res.statusText);
-        return;
-      }
-
+      if (!res.ok) return;
       const data: Course[] = await res.json();
       setCourses(data);
     } catch (error) {
@@ -84,9 +90,32 @@ export default function Home({ onLogout }: AppProps) {
     }
   };
 
+  /** Fetch products dari API */
+  const fetchProducts = async () => {
+    if (!token) return;
+    try {
+      const res = await fetch("/api/product", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      setProducts(Array.isArray(data) ? data : data.data || []);
+    } catch (error) {
+      console.error("Error fetching products:", error);
+      setProducts([]);
+    }
+  };
+
   useEffect(() => {
-    if (token) fetchCourses();
-  }, [token]);
+    if (token) {
+      fetchCourses();
+      if (user?.role === "student") {
+        fetchProducts();
+      }
+      setLoading(false);
+    }
+    // eslint-disable-next-line
+  }, [token, user]);
 
   /** File upload handler */
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -106,7 +135,7 @@ export default function Home({ onLogout }: AppProps) {
     return () => URL.revokeObjectURL(objectUrl);
   }, [coverImage]);
 
-  /** Helper untuk convert file ke base64 */
+  /** Helper convert file ke base64 */
   const fileToBase64 = (file: File): Promise<string> =>
     new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -122,23 +151,19 @@ export default function Home({ onLogout }: AppProps) {
       alert("Please fill all fields.");
       return;
     }
-
     if (user?.role !== "instructor") {
       alert("Hanya instructor yang bisa mengelola course.");
       return;
     }
-
     setLoading(true);
     try {
       if (!token) throw new Error("Unauthorized");
-
       let coverBase64: string | null = null;
       if (coverImage) {
         coverBase64 = await fileToBase64(coverImage);
       } else if (coverPreview && !coverPreview.startsWith("blob:")) {
         coverBase64 = coverPreview;
       }
-
       const body = {
         title: courseTitle,
         overview,
@@ -146,10 +171,8 @@ export default function Home({ onLogout }: AppProps) {
         course_type: courseType || "single",
         slug: courseSlug,
       };
-
       const url = courseId ? `/api/courses/${courseId}` : "/api/courses";
       const method = courseId ? "PUT" : "POST";
-
       const res = await fetch(url, {
         method,
         headers: {
@@ -158,18 +181,12 @@ export default function Home({ onLogout }: AppProps) {
         },
         body: JSON.stringify(body),
       });
-
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || "Failed to save course");
-      }
-
+      if (!res.ok) throw new Error("Failed to save course");
       await fetchCourses();
       setShowModal(false);
       resetForm();
-      alert(courseId ? "Course updated successfully!" : "Course created successfully!");
+      alert(courseId ? "Course updated!" : "Course created!");
     } catch (error: any) {
-      console.error("Save course error:", error);
       alert(`Error saving course: ${error.message}`);
     } finally {
       setLoading(false);
@@ -190,14 +207,11 @@ export default function Home({ onLogout }: AppProps) {
   /** Delete course */
   const handleDelete = async (id: string) => {
     if (!token) return;
-
     if (user?.role !== "instructor") {
       alert("Hanya instructor yang bisa menghapus course.");
       return;
     }
-
-    if (!window.confirm("Are you sure you want to delete this course?")) return;
-
+    if (!window.confirm("Are you sure?")) return;
     try {
       const res = await fetch(`/api/courses/${id}`, {
         method: "DELETE",
@@ -206,17 +220,13 @@ export default function Home({ onLogout }: AppProps) {
       if (!res.ok) throw new Error("Failed to delete course");
       await fetchCourses();
     } catch (error) {
-      console.error("Delete error:", error);
       alert("Error deleting course");
     }
   };
 
   /** Edit course */
   const handleEdit = (course: Course) => {
-    if (user?.role !== "instructor") {
-      alert("Hanya instructor yang bisa edit course.");
-      return;
-    }
+    if (user?.role !== "instructor") return;
     setCourseId(course.id);
     setCourseTitle(course.title);
     setOverview(course.overview);
@@ -226,28 +236,38 @@ export default function Home({ onLogout }: AppProps) {
     setShowModal(true);
   };
 
-  /** Toggle select course untuk order */
-  const toggleSelectCourse = (id: string) => {
-    setSelectedCourses((prev) =>
-      prev.includes(id) ? prev.filter((cid) => cid !== id) : [...prev, id]
+  /** Toggle select product untuk order */
+  const toggleSelectProduct = (productId: string) => {
+    setSelectedProducts((prev) =>
+      prev.includes(productId)
+        ? prev.filter((id) => id !== productId)
+        : [...prev, productId]
     );
   };
 
-  /** Submit order ke backend */
+  /** Toggle select course untuk order */
+  const toggleSelectCourse = (courseId: string) => {
+    setSelectedCourses((prev) =>
+      prev.includes(courseId)
+        ? prev.filter((id) => id !== courseId)
+        : [...prev, courseId]
+    );
+  };
+
+  /** Submit order */
   const handleOrderSubmit = async () => {
     if (!token || !user) return;
-
-    if (selectedCourses.length === 0) {
-      alert("Pilih minimal satu course untuk order.");
+    if (selectedProducts.length === 0 && selectedCourses.length === 0) {
+      alert("Pilih minimal satu product atau course untuk order.");
       return;
     }
     if (!orderDate) {
       alert("Pilih tanggal order terlebih dahulu.");
       return;
     }
-
+    setLoading(true);
     try {
-      // Step 1: Buat order
+      // buat order
       const resOrder = await fetch("/api/orders", {
         method: "POST",
         headers: {
@@ -256,16 +276,30 @@ export default function Home({ onLogout }: AppProps) {
         },
         body: JSON.stringify({ status: "pending", order_date: orderDate }),
       });
-
-      if (!resOrder.ok) {
-        const err = await resOrder.json().catch(() => ({}));
-        throw new Error(err.error || "Gagal membuat order");
-      }
-
+      if (!resOrder.ok) throw new Error("Gagal membuat order");
       const orderData = await resOrder.json();
       const orderId = orderData.order.id;
 
-      // Step 2: Tambahkan order lines untuk setiap course ke API baru
+      // order-lines dari products
+      for (const pId of selectedProducts) {
+        const product = products.find((p) => p.id === pId);
+        if (!product) continue;
+        await fetch("/api/order-lines", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            order_id: orderId,
+            product_id: product.id,
+            course_id: product.course_id ?? null,
+            status: "pending",
+          }),
+        });
+      }
+
+      // order-lines dari courses
       for (const cId of selectedCourses) {
         await fetch("/api/order-lines", {
           method: "POST",
@@ -275,7 +309,7 @@ export default function Home({ onLogout }: AppProps) {
           },
           body: JSON.stringify({
             order_id: orderId,
-            product_id: cId,
+            product_id: null,
             course_id: cId,
             status: "pending",
           }),
@@ -283,17 +317,19 @@ export default function Home({ onLogout }: AppProps) {
       }
 
       alert("Order berhasil dibuat!");
+      setSelectedProducts([]);
       setSelectedCourses([]);
       setOrderDate("");
       setShowOrderModal(false);
       navigate("/chart");
     } catch (err: any) {
-      console.error("Order submit error:", err);
       alert(`Error membuat order: ${err.message}`);
+    } finally {
+      setLoading(false);
     }
   };
 
-  /** Filter course by search query */
+  /** Filter course by search */
   const filteredCourses = courses.filter((c) =>
     c.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -304,21 +340,19 @@ export default function Home({ onLogout }: AppProps) {
       <div className="main">
         <Navbar userName={user ? user.first_name : "Loading..."} onLogout={onLogout} />
         <main className="content">
-          {/* Profile Card */}
           <div className="profile-card">
             <h3>{user ? user.first_name : "Loading..."}</h3>
             <p>Role: {user?.role || "Unknown"}</p>
             <button>View Profile</button>
           </div>
 
-          {/* Courses Section */}
           <div className="courses-section">
             <div className="flex justify-between items-center mb-4">
               <h2>Your Courses</h2>
 
               {user?.role === "instructor" && (
                 <button
-                  className="px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600"
+                  className="px-4 py-2 rounded-lg bg-blue-500 text-white"
                   onClick={() => {
                     resetForm();
                     setShowModal(true);
@@ -330,10 +364,10 @@ export default function Home({ onLogout }: AppProps) {
 
               {user?.role === "student" && (
                 <button
-                  className="px-4 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600"
+                  className="px-4 py-2 rounded-lg bg-green-500 text-white"
                   onClick={() => setShowOrderModal(true)}
                 >
-                  🛒 Order Course
+                  🛒 Order
                 </button>
               )}
             </div>
@@ -361,7 +395,6 @@ export default function Home({ onLogout }: AppProps) {
                         <h3>{course.title}</h3>
                       </Link>
                       <p>{course.overview}</p>
-
                       {user?.role === "instructor" && (
                         <div className="flex space-x-2 mt-2">
                           <button
@@ -393,18 +426,16 @@ export default function Home({ onLogout }: AppProps) {
       {showOrderModal && user?.role === "student" && (
         <div className="modal-overlay">
           <div className="modal">
-            <h2 className="mb-4">Order Courses</h2>
+            <h2 className="mb-4">Order</h2>
 
-            {/* Search */}
             <input
               type="text"
-              placeholder="Search course..."
+              placeholder="Search product..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full px-2 py-1 border rounded mb-3"
             />
 
-            {/* Order Date */}
             <div className="mb-3">
               <label className="block mb-1">Tanggal Order</label>
               <input
@@ -416,8 +447,32 @@ export default function Home({ onLogout }: AppProps) {
               />
             </div>
 
-            <div className="space-y-2 max-h-60 overflow-y-auto">
-              {filteredCourses.map((course) => (
+            <div className="mb-2 font-semibold">Products</div>
+            <div className="space-y-2 max-h-40 overflow-y-auto">
+              {filteredProducts.map((product) => (
+                <div key={product.id} className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={selectedProducts.includes(product.id)}
+                    onChange={() => toggleSelectProduct(product.id)}
+                  />
+                  <span>
+                    {product.title} - Rp{product.price}
+                    {product.course_id && (
+                      <span style={{ color: "gray", fontSize: 12 }}>
+                        {" "}
+                        ({courses.find((c) => c.id === product.course_id)?.title || "Course"})
+                      </span>
+                    )}
+                  </span>
+                </div>
+              ))}
+              {filteredProducts.length === 0 && <p>No products found.</p>}
+            </div>
+
+            <div className="mt-4 mb-2 font-semibold">Courses</div>
+            <div className="space-y-2 max-h-40 overflow-y-auto">
+              {courses.map((course) => (
                 <div key={course.id} className="flex items-center space-x-2">
                   <input
                     type="checkbox"
@@ -427,7 +482,7 @@ export default function Home({ onLogout }: AppProps) {
                   <span>{course.title}</span>
                 </div>
               ))}
-              {filteredCourses.length === 0 && <p>No courses found.</p>}
+              {courses.length === 0 && <p>No courses available.</p>}
             </div>
 
             <div className="flex justify-end space-x-2 mt-4">
@@ -489,12 +544,7 @@ export default function Home({ onLogout }: AppProps) {
                 <option value="bundle">Bundle</option>
               </select>
 
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleFileChange}
-                className="w-full"
-              />
+              <input type="file" accept="image/*" onChange={handleFileChange} className="w-full" />
               {coverPreview && (
                 <img src={coverPreview} alt="Preview" className="w-32 h-32 object-cover mt-2" />
               )}
