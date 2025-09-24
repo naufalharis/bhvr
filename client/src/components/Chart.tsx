@@ -1,44 +1,30 @@
-// src/components/OrderLines.tsx
 import React, { useEffect, useState } from "react";
-import Sidebar from "./pages/Sidebar";
-import Navbar from "./pages/Navbar";
 
 interface OrderLine {
   id: string;
   order_id: string;
-  product_id: string | null;
-  course_id?: string | null;
+  product_id: string;
+  course_id?: string;
   status: string;
-  product?: Product | null;
 }
 
 export default function OrderLines() {
-  const { order_id } = useParams<{ order_id: string }>();
   const [orderLines, setOrderLines] = useState<OrderLine[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Ambil token dari localStorage
   const token = localStorage.getItem("token");
-  const navigate = useNavigate();
 
   const fetchOrderLines = async () => {
-    if (!order_id) {
-      setError("Order ID tidak ditemukan.");
-      setLoading(false);
-      return;
-    }
-
     try {
-      // endpoint backend: GET /api/orders/:orderId/order-lines
-      const res = await fetch(`/api/orders/${order_id}/order-lines`, {
+      const res = await fetch("/api/order-lines", {
         headers: { Authorization: `Bearer ${token}` },
       });
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(
-          err.error || `Gagal fetch order_lines untuk order ${order_id}`
-        );
+        throw new Error(err.error || "Gagal fetch order_lines");
       }
 
       const data = await res.json();
@@ -53,34 +39,7 @@ export default function OrderLines() {
 
   useEffect(() => {
     fetchOrderLines();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [order_id]);
-
-  const removeItem = async (lineId: string) => {
-    if (!window.confirm("Hapus item ini?")) return;
-
-    try {
-      const res = await fetch(`/api/order-lines/${lineId}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Gagal menghapus item");
-      }
-
-      // hapus dari state
-      setOrderLines((prev) => prev.filter((line) => line.id !== lineId));
-    } catch (err: any) {
-      alert(err.message || "Error menghapus item");
-    }
-  };
-
-  const checkout = () => {
-    alert("Checkout berhasil!");
-    navigate("/chart"); // arahkan ke halaman chart setelah checkout
-  };
+  }, []);
 
   if (loading)
     return <p style={{ padding: "20px", color: "#555" }}>Loading order lines...</p>;
@@ -89,19 +48,15 @@ export default function OrderLines() {
 
   return (
     <div style={{ padding: "20px" }}>
-      <h2>🛒 Your Cart (Order Lines)</h2>
+      <h2 style={titleStyle}>📦 Order Lines</h2>
 
       {orderLines.length === 0 ? (
-        <p>Keranjang masih kosong.</p>
+        <p style={{ marginTop: "12px", color: "#666" }}>
+          Belum ada order line.
+        </p>
       ) : (
-        <>
-          <table
-            style={{
-              width: "100%",
-              borderCollapse: "collapse",
-              marginTop: "16px",
-            }}
-          >
+        <div style={{ overflowX: "auto", marginTop: "16px" }}>
+          <table style={tableStyle}>
             <thead>
               <tr>
                 <th style={thStyle}>ID</th>
@@ -109,53 +64,28 @@ export default function OrderLines() {
                 <th style={thStyle}>Product ID</th>
                 <th style={thStyle}>Course ID</th>
                 <th style={thStyle}>Status</th>
-                <th style={thStyle}>Aksi</th>
               </tr>
             </thead>
             <tbody>
-              {orderLines.map((line) => (
-                <tr key={line.id}>
+              {orderLines.map((line, index) => (
+                <tr
+                  key={line.id}
+                  style={{
+                    backgroundColor: index % 2 === 0 ? "#fff" : "#f9fafb",
+                  }}
+                >
                   <td style={tdStyle}>{line.id}</td>
                   <td style={tdStyle}>{line.order_id}</td>
                   <td style={tdStyle}>{line.product_id}</td>
                   <td style={tdStyle}>{line.course_id || "-"}</td>
-                  <td style={tdStyle}>{line.status}</td>
-                  <td style={tdStyle}>
-                    <button
-                      onClick={() => removeItem(line.id)}
-                      style={{
-                        padding: "6px 12px",
-                        background: "red",
-                        color: "white",
-                        border: "none",
-                        borderRadius: "6px",
-                        cursor: "pointer",
-                      }}
-                    >
-                      Hapus
-                    </button>
+                  <td style={{ ...tdStyle, ...statusStyle(line.status) }}>
+                    {line.status}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-
-          {/* Tombol Checkout */}
-          <button
-            onClick={checkout}
-            style={{
-              marginTop: "16px",
-              padding: "8px 16px",
-              background: "orange",
-              color: "white",
-              border: "none",
-              borderRadius: "6px",
-              cursor: "pointer",
-            }}
-          >
-            Checkout
-          </button>
-        </>
+        </div>
       )}
     </div>
   );

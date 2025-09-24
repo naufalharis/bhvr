@@ -267,14 +267,14 @@ export default function Home({ onLogout }: AppProps) {
     }
     setLoading(true);
     try {
-      // buat order (status default pending)
+      // buat order
       const resOrder = await fetch("/api/orders", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ status: "pending" }),
+        body: JSON.stringify({ status: "pending", order_date: orderDate }),
       });
       if (!resOrder.ok) throw new Error("Gagal membuat order");
       const orderData = await resOrder.json();
@@ -328,11 +328,6 @@ export default function Home({ onLogout }: AppProps) {
       setLoading(false);
     }
   };
-
-  /** Filter product by search */
-  const filteredProducts = products.filter((p) =>
-    p.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   /** Filter product by search */
   const filteredProducts = products.filter((p) =>
