@@ -267,14 +267,14 @@ export default function Home({ onLogout }: AppProps) {
     }
     setLoading(true);
     try {
-      // buat order
+      // buat order (status default pending)
       const resOrder = await fetch("/api/orders", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ status: "pending", order_date: orderDate }),
+        body: JSON.stringify({ status: "pending" }),
       });
       if (!resOrder.ok) throw new Error("Gagal membuat order");
       const orderData = await resOrder.json();
@@ -332,6 +332,11 @@ export default function Home({ onLogout }: AppProps) {
   /** Filter course by search */
   const filteredCourses = courses.filter((c) =>
     c.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  /** Filter product by search */
+  const filteredProducts = products.filter((p) =>
+    p.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (

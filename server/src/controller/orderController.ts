@@ -132,15 +132,29 @@ export const getOrderDetails = async (c: Context) => {
 };
 
 // === STEP 6: Get Order Lines by Order
+// === STEP 5: Get Order Lines by Order (with product info)
 export const getOrderLinesByOrder = async (c: Context) => {
   try {
     const { orderId } = c.req.param();
+
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+    });
+    if (!order) {
+      return c.json({ error: "Order not found" }, 404);
+    }
+
+    // ambil order_lines + product
     const orderLines = await prisma.orderLine.findMany({
       where: { order_id: orderId },
+      include: {
+        product: true, // ambil detail produk dari relasi FK
+      },
     });
-    return c.json({ orderLines });
+
+    return c.json({ orderId, orderLines });
   } catch (error: any) {
-    console.error(error);
+    console.error("getOrderLinesByOrder error:", error);
     return c.json({ error: error.message }, 500);
   }
 };

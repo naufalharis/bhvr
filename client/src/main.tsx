@@ -10,16 +10,32 @@ import {
   useParams,
 } from "react-router-dom";
 
-import Login from "./components/login";
+import Login from "./components/Login";
 import Home from "./components/Home";
 import Register from "./components/Register";
 import Chapter from "./components/Chapter";
-import ChapterContents from "./components/ChapterContent"; 
+import ChapterContents from "./components/ChapterContent";
 import Chart from "./components/Chart"; // ✅ import halaman Chart
 
+// ✅ Komponen ProtectedRoute
+function ProtectedRoute({
+  isLoggedIn,
+  children,
+}: {
+  isLoggedIn: boolean;
+  children: React.ReactNode;
+}) {
+  if (!isLoggedIn) {
+    return <Navigate to="/login" replace />;
+  }
+  return <>{children}</>;
+}
+
 function App() {
-  // default: user belum login
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  // ✅ ambil status login langsung dari localStorage sejak awal
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
+    return localStorage.getItem("isLoggedIn") === "true";
+  });
 
   // setiap kali isLoggedIn berubah, update localStorage
   useEffect(() => {

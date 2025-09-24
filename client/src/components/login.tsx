@@ -12,7 +12,7 @@ export default function Login({ onLogin }: Props) {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  // gunakan proxy dari vite.config.js
+  // cukup pakai proxy dari vite.config.ts
   const API_URL = "/api/login";
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -30,11 +30,7 @@ export default function Login({ onLogin }: Props) {
       const contentType = res.headers.get("content-type");
 
       if (contentType && contentType.includes("application/json")) {
-        try {
-          data = await res.json();
-        } catch {
-          data = {};
-        }
+        data = await res.json().catch(() => ({}));
       } else {
         const text = await res.text();
         data = text ? { message: text } : {};
@@ -50,6 +46,7 @@ export default function Login({ onLogin }: Props) {
 
       if (data?.token) {
         localStorage.setItem("token", data.token);
+        localStorage.setItem("isLoggedIn", "true");
         if (data.user) {
           localStorage.setItem("user", JSON.stringify(data.user));
         }
