@@ -284,7 +284,7 @@ export default function Home({ onLogout }: AppProps) {
       for (const pId of selectedProducts) {
         const product = products.find((p) => p.id === pId);
         if (!product) continue;
-        await fetch("/api/student/order-lines", {
+        await fetch("/api/order-lines", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -293,7 +293,7 @@ export default function Home({ onLogout }: AppProps) {
           body: JSON.stringify({
             order_id: orderId,
             product_id: product.id,
-            course_id: product.course_id,
+            course_id: product.course_id ?? null,
             status: "pending",
           }),
         });
@@ -301,7 +301,7 @@ export default function Home({ onLogout }: AppProps) {
 
       // order-lines dari courses
       for (const cId of selectedCourses) {
-        await fetch("/api/student/order-lines", {
+        await fetch("/api/order-lines", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -329,9 +329,9 @@ export default function Home({ onLogout }: AppProps) {
     }
   };
 
-  /** Filter product by search */
-  const filteredProducts = products.filter((p) =>
-    p.title.toLowerCase().includes(searchQuery.toLowerCase())
+  /** Filter course by search */
+  const filteredCourses = courses.filter((c) =>
+    c.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   /** Filter product by search */
@@ -377,9 +377,20 @@ export default function Home({ onLogout }: AppProps) {
               )}
             </div>
 
+            {/* Search Input */}
+            <div className="mb-4">
+              <input
+                type="text"
+                placeholder="Search courses..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full px-3 py-2 border rounded"
+              />
+            </div>
+
             <div className="course-list">
-              {courses.length > 0 ? (
-                courses.map((course) => (
+              {filteredCourses.length > 0 ? (
+                filteredCourses.map((course) => (
                   <div key={course.id} className="course-card">
                     {course.cover && (
                       <img src={course.cover} alt={course.title} className="course-cover" />
@@ -409,7 +420,7 @@ export default function Home({ onLogout }: AppProps) {
                   </div>
                 ))
               ) : (
-                <p>No courses available.</p>
+                <p>No courses found.</p>
               )}
             </div>
           </div>

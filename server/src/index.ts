@@ -9,7 +9,7 @@ import {
 import { authMiddleware } from "./middleware/authMiddleware";
 import courseCategory from './controller/courseCategoryController'
 import { addAffiliateCourse, listAffiliateCourses } from './controller/affiliateController';
-import { createOrder, addOrderLine, addPayment, getOrderDetails, getOrderLinesByOrder, getPendingOrderLinesForStudent, postOrderLineForStudent } from "./controller/orderController";
+import { createOrder, addOrderLine, addPayment, getOrderDetails, getOrderLinesByOrder } from "./controller/orderController";
 import { getAllProducts, getProductTypes, getProductById } from './controller/productController';
 
 const app = new Hono()
@@ -40,11 +40,8 @@ app.get("/affiliates/:affiliateId/courses", authMiddleware, listAffiliateCourses
 app.post("/api/orders", authMiddleware, createOrder);
 app.post("/order-lines", authMiddleware, addOrderLine);
 app.post("/api/payments", authMiddleware, addPayment);
-app.post("/api/student/order-lines", authMiddleware, postOrderLineForStudent); // <-- Tambahkan ini
 app.get("/api/orders/:id", authMiddleware, getOrderDetails);
 app.get("/api/order-lines", authMiddleware, getOrderLinesByOrder);
-app.get("/api/order-lines/pending", authMiddleware, getPendingOrderLinesForStudent);
-
 
 app.get("/api/product", authMiddleware,getAllProducts);
 app.get("/api/product/types", authMiddleware,getProductTypes);
