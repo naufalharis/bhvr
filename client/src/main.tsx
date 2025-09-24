@@ -32,10 +32,8 @@ function ProtectedRoute({
 }
 
 function App() {
-  // ✅ ambil status login langsung dari localStorage sejak awal
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
-    return localStorage.getItem("isLoggedIn") === "true";
-  });
+  // default: user belum login
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
 
   // setiap kali isLoggedIn berubah, update localStorage
   useEffect(() => {
@@ -99,7 +97,7 @@ function App() {
         }
       />
 
-      {/* Chapter Contents route dengan parameter chapterId */}
+      {/* Chapter Contents */}
       <Route
         path="/chapter/:chapterId/contents"
         element={
@@ -109,7 +107,7 @@ function App() {
         }
       />
 
-      {/* ✅ Chart route */}
+      {/* Chart */}
       <Route
         path="/chart"
         element={
@@ -125,7 +123,21 @@ function App() {
   );
 }
 
-// Wrapper Register agar bisa redirect setelah sukses
+// ✅ Wrapper agar hanya bisa diakses saat login
+function ProtectedRoute({
+  isLoggedIn,
+  children,
+}: {
+  isLoggedIn: boolean;
+  children: React.ReactNode;
+}) {
+  if (!isLoggedIn) {
+    return <Navigate to="/login" replace />;
+  }
+  return <>{children}</>;
+}
+
+// ✅ Wrapper Register agar redirect ke login setelah register
 function RegisterRedirect() {
   const navigate = useNavigate();
   const handleRegister = () => {
@@ -134,7 +146,7 @@ function RegisterRedirect() {
   return <Register onRegister={handleRegister} />;
 }
 
-// Wrapper untuk ChapterContents agar bisa membaca chapterId dari param
+// ✅ Wrapper ChapterContents agar bisa ambil param
 function ChapterContentsWrapper() {
   const { chapterId } = useParams<{ chapterId: string }>();
   if (!chapterId) return <div>Chapter ID is missing</div>;

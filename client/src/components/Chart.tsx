@@ -1,17 +1,7 @@
 // src/components/OrderLines.tsx
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
 import Sidebar from "./pages/Sidebar";
 import Navbar from "./pages/Navbar";
-
-interface Product {
-  id: string;
-  title: string;
-  overview?: string;
-  cover?: string;
-  product_type?: string;
-  price?: number;
-}
 
 interface OrderLine {
   id: string;
@@ -92,102 +82,139 @@ export default function OrderLines() {
     navigate("/chart"); // arahkan ke halaman chart setelah checkout
   };
 
-  if (loading) return <p>Loading order lines...</p>;
-  if (error) return <p style={{ color: "red" }}>{error}</p>;
+  if (loading)
+    return <p style={{ padding: "20px", color: "#555" }}>Loading order lines...</p>;
+  if (error)
+    return <p style={{ padding: "20px", color: "red" }}>{error}</p>;
 
   return (
-    <div className="app">
-      <Sidebar />
-      <div className="main">
-        <Navbar userName="User" onLogout={() => {}} />
-        <div style={{ padding: "20px" }}>
-          <h2>🛒 Order Lines untuk Order ID: {order_id}</h2>
+    <div style={{ padding: "20px" }}>
+      <h2>🛒 Your Cart (Order Lines)</h2>
 
-          {orderLines.length === 0 ? (
-            <p>Keranjang masih kosong.</p>
-          ) : (
-            <>
-              <table
-                style={{
-                  width: "100%",
-                  borderCollapse: "collapse",
-                  marginTop: "16px",
-                }}
-              >
-                <thead>
-                  <tr>
-                    <th style={thStyle}>ID</th>
-                    <th style={thStyle}>Produk</th>
-                    <th style={thStyle}>Harga</th>
-                    <th style={thStyle}>Course ID</th>
-                    <th style={thStyle}>Status</th>
-                    <th style={thStyle}>Aksi</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {orderLines.map((line) => (
-                    <tr key={line.id}>
-                      <td style={tdStyle}>{line.id}</td>
-                      <td style={tdStyle}>
-                        {line.product?.title || line.product_id || "-"}
-                      </td>
-                      <td style={tdStyle}>
-                        {line.product?.price
-                          ? `Rp ${line.product.price.toLocaleString()}`
-                          : "-"}
-                      </td>
-                      <td style={tdStyle}>{line.course_id || "-"}</td>
-                      <td style={tdStyle}>{line.status}</td>
-                      <td style={tdStyle}>
-                        <button
-                          onClick={() => removeItem(line.id)}
-                          style={{
-                            padding: "6px 12px",
-                            background: "red",
-                            color: "white",
-                            border: "none",
-                            borderRadius: "6px",
-                            cursor: "pointer",
-                          }}
-                        >
-                          Hapus
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+      {orderLines.length === 0 ? (
+        <p>Keranjang masih kosong.</p>
+      ) : (
+        <>
+          <table
+            style={{
+              width: "100%",
+              borderCollapse: "collapse",
+              marginTop: "16px",
+            }}
+          >
+            <thead>
+              <tr>
+                <th style={thStyle}>ID</th>
+                <th style={thStyle}>Order ID</th>
+                <th style={thStyle}>Product ID</th>
+                <th style={thStyle}>Course ID</th>
+                <th style={thStyle}>Status</th>
+                <th style={thStyle}>Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              {orderLines.map((line) => (
+                <tr key={line.id}>
+                  <td style={tdStyle}>{line.id}</td>
+                  <td style={tdStyle}>{line.order_id}</td>
+                  <td style={tdStyle}>{line.product_id}</td>
+                  <td style={tdStyle}>{line.course_id || "-"}</td>
+                  <td style={tdStyle}>{line.status}</td>
+                  <td style={tdStyle}>
+                    <button
+                      onClick={() => removeItem(line.id)}
+                      style={{
+                        padding: "6px 12px",
+                        background: "red",
+                        color: "white",
+                        border: "none",
+                        borderRadius: "6px",
+                        cursor: "pointer",
+                      }}
+                    >
+                      Hapus
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
 
-              {/* Tombol Checkout */}
-              <button
-                onClick={checkout}
-                style={{
-                  marginTop: "16px",
-                  padding: "8px 16px",
-                  background: "orange",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "6px",
-                  cursor: "pointer",
-                }}
-              >
-                Checkout
-              </button>
-            </>
-          )}
-        </div>
-      </div>
+          {/* Tombol Checkout */}
+          <button
+            onClick={checkout}
+            style={{
+              marginTop: "16px",
+              padding: "8px 16px",
+              background: "orange",
+              color: "white",
+              border: "none",
+              borderRadius: "6px",
+              cursor: "pointer",
+            }}
+          >
+            Checkout
+          </button>
+        </>
+      )}
     </div>
   );
 }
 
+// 🔹 Styles
+const titleStyle: React.CSSProperties = {
+  fontSize: "20px",
+  fontWeight: "600",
+  marginBottom: "10px",
+  color: "#111827",
+};
+
+const tableStyle: React.CSSProperties = {
+  width: "100%",
+  borderCollapse: "collapse",
+  borderRadius: "8px",
+  overflow: "hidden",
+  boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
+};
+
 const thStyle: React.CSSProperties = {
-  border: "1px solid #ccc",
-  padding: "8px",
+  borderBottom: "2px solid #e5e7eb",
+  padding: "12px",
+  textAlign: "left",
   background: "#f3f4f6",
+  fontWeight: 600,
+  fontSize: "14px",
+  color: "#374151",
 };
 
 const tdStyle: React.CSSProperties = {
-  border: "1px solid #ccc",
-  padding: "8px",
+  borderBottom: "1px solid #e5e7eb",
+  padding: "10px 12px",
+  fontSize: "14px",
+  color: "#111827",
+};
+
+// 🔹 Dynamic status badge
+const statusStyle = (status: string): React.CSSProperties => {
+  let bg = "#e5e7eb";
+  let color = "#374151";
+
+  if (status === "pending") {
+    bg = "#fef3c7";
+    color = "#92400e";
+  } else if (status === "completed") {
+    bg = "#d1fae5";
+    color = "#065f46";
+  } else if (status === "failed") {
+    bg = "#fee2e2";
+    color = "#991b1b";
+  }
+
+  return {
+    background: bg,
+    color: color,
+    fontWeight: 500,
+    textAlign: "center",
+    borderRadius: "6px",
+  };
 };
