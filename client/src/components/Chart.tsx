@@ -41,56 +41,110 @@ export default function OrderLines() {
     fetchOrderLines();
   }, []);
 
-  if (loading) return <p>Loading order lines...</p>;
-  if (error) return <p style={{ color: "red" }}>{error}</p>;
+  if (loading)
+    return <p style={{ padding: "20px", color: "#555" }}>Loading order lines...</p>;
+  if (error)
+    return <p style={{ padding: "20px", color: "red" }}>{error}</p>;
 
   return (
     <div style={{ padding: "20px" }}>
-      <h2>📦 Order Lines</h2>
+      <h2 style={titleStyle}>📦 Order Lines</h2>
 
       {orderLines.length === 0 ? (
-        <p>Belum ada order line.</p>
+        <p style={{ marginTop: "12px", color: "#666" }}>
+          Belum ada order line.
+        </p>
       ) : (
-        <table
-          style={{
-            width: "100%",
-            borderCollapse: "collapse",
-            marginTop: "16px",
-          }}
-        >
-          <thead>
-            <tr>
-              <th style={thStyle}>ID</th>
-              <th style={thStyle}>Order ID</th>
-              <th style={thStyle}>Product ID</th>
-              <th style={thStyle}>Course ID</th>
-              <th style={thStyle}>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {orderLines.map((line) => (
-              <tr key={line.id}>
-                <td style={tdStyle}>{line.id}</td>
-                <td style={tdStyle}>{line.order_id}</td>
-                <td style={tdStyle}>{line.product_id}</td>
-                <td style={tdStyle}>{line.course_id || "-"}</td>
-                <td style={tdStyle}>{line.status}</td>
+        <div style={{ overflowX: "auto", marginTop: "16px" }}>
+          <table style={tableStyle}>
+            <thead>
+              <tr>
+                <th style={thStyle}>ID</th>
+                <th style={thStyle}>Order ID</th>
+                <th style={thStyle}>Product ID</th>
+                <th style={thStyle}>Course ID</th>
+                <th style={thStyle}>Status</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {orderLines.map((line, index) => (
+                <tr
+                  key={line.id}
+                  style={{
+                    backgroundColor: index % 2 === 0 ? "#fff" : "#f9fafb",
+                  }}
+                >
+                  <td style={tdStyle}>{line.id}</td>
+                  <td style={tdStyle}>{line.order_id}</td>
+                  <td style={tdStyle}>{line.product_id}</td>
+                  <td style={tdStyle}>{line.course_id || "-"}</td>
+                  <td style={{ ...tdStyle, ...statusStyle(line.status) }}>
+                    {line.status}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );
 }
 
+// 🔹 Styles
+const titleStyle: React.CSSProperties = {
+  fontSize: "20px",
+  fontWeight: "600",
+  marginBottom: "10px",
+  color: "#111827",
+};
+
+const tableStyle: React.CSSProperties = {
+  width: "100%",
+  borderCollapse: "collapse",
+  borderRadius: "8px",
+  overflow: "hidden",
+  boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
+};
+
 const thStyle: React.CSSProperties = {
-  border: "1px solid #ccc",
-  padding: "8px",
+  borderBottom: "2px solid #e5e7eb",
+  padding: "12px",
+  textAlign: "left",
   background: "#f3f4f6",
+  fontWeight: 600,
+  fontSize: "14px",
+  color: "#374151",
 };
 
 const tdStyle: React.CSSProperties = {
-  border: "1px solid #ccc",
-  padding: "8px",
+  borderBottom: "1px solid #e5e7eb",
+  padding: "10px 12px",
+  fontSize: "14px",
+  color: "#111827",
+};
+
+// 🔹 Dynamic status badge
+const statusStyle = (status: string): React.CSSProperties => {
+  let bg = "#e5e7eb";
+  let color = "#374151";
+
+  if (status === "pending") {
+    bg = "#fef3c7";
+    color = "#92400e";
+  } else if (status === "completed") {
+    bg = "#d1fae5";
+    color = "#065f46";
+  } else if (status === "failed") {
+    bg = "#fee2e2";
+    color = "#991b1b";
+  }
+
+  return {
+    background: bg,
+    color: color,
+    fontWeight: 500,
+    textAlign: "center",
+    borderRadius: "6px",
+  };
 };

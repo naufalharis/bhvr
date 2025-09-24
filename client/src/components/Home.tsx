@@ -284,7 +284,7 @@ export default function Home({ onLogout }: AppProps) {
       for (const pId of selectedProducts) {
         const product = products.find((p) => p.id === pId);
         if (!product) continue;
-        await fetch("/api/order-lines", {
+        await fetch("/api/student/order-lines", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -293,7 +293,7 @@ export default function Home({ onLogout }: AppProps) {
           body: JSON.stringify({
             order_id: orderId,
             product_id: product.id,
-            course_id: product.course_id ?? null,
+            course_id: product.course_id,
             status: "pending",
           }),
         });
@@ -301,7 +301,7 @@ export default function Home({ onLogout }: AppProps) {
 
       // order-lines dari courses
       for (const cId of selectedCourses) {
-        await fetch("/api/order-lines", {
+        await fetch("/api/student/order-lines", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
