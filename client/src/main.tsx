@@ -10,14 +10,14 @@ import {
   useParams,
 } from "react-router-dom";
 
-import Login from "./components/Login";
+import Login from "./components/login";
 import Home from "./components/Home";
 import Register from "./components/Register";
 import Chapter from "./components/Chapter";
 import ChapterContents from "./components/ChapterContent";
 import Chart from "./components/Chart"; // ✅ import halaman Chart
 
-// ✅ Komponen ProtectedRoute
+// ✅ Komponen ProtectedRoute (cukup sekali aja)
 function ProtectedRoute({
   isLoggedIn,
   children,
@@ -121,20 +121,6 @@ function App() {
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
-}
-
-// ✅ Wrapper agar hanya bisa diakses saat login
-function ProtectedRoute({
-  isLoggedIn,
-  children,
-}: {
-  isLoggedIn: boolean;
-  children: React.ReactNode;
-}) {
-  if (!isLoggedIn) {
-    return <Navigate to="/login" replace />;
-  }
-  return <>{children}</>;
 }
 
 // ✅ Wrapper Register agar redirect ke login setelah register
