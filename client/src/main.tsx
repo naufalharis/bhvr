@@ -16,6 +16,7 @@ import Register from "./components/Register";
 import Chapter from "./components/Chapter";
 import ChapterContents from "./components/ChapterContent";
 import Chart from "./components/Chart"; // ✅ import halaman Chart
+import Payment from "./components/Payment"; // ✅ import halaman Payment
 
 // ✅ Komponen ProtectedRoute (cukup sekali aja)
 function ProtectedRoute({
@@ -117,6 +118,16 @@ function App() {
         }
       />
 
+      {/* ✅ Payment */}
+      <Route
+        path="/payment/:orderId"
+        element={
+          <ProtectedRoute isLoggedIn={isLoggedIn}>
+            <PaymentWrapper />
+          </ProtectedRoute>
+        }
+      />
+
       {/* Catch all */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
@@ -137,6 +148,13 @@ function ChapterContentsWrapper() {
   const { chapterId } = useParams<{ chapterId: string }>();
   if (!chapterId) return <div>Chapter ID is missing</div>;
   return <ChapterContents chapterId={chapterId} />;
+}
+
+// ✅ Wrapper Payment agar bisa ambil orderId dari param
+function PaymentWrapper() {
+  const { orderId } = useParams<{ orderId: string }>();
+  if (!orderId) return <div>Order ID is missing</div>;
+  return <Payment orderId={orderId} />;
 }
 
 ReactDOM.createRoot(document.getElementById("root")!).render(

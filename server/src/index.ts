@@ -38,7 +38,7 @@ app.post("/affiliates/:affiliateId/courses", authMiddleware, addAffiliateCourse)
 app.get("/affiliates/:affiliateId/courses", authMiddleware, listAffiliateCourses);
 // orders and payments
 app.post("/api/orders", authMiddleware, createOrder);
-app.post("/order-lines", authMiddleware, addOrderLine);
+app.post("/api/order-lines", authMiddleware, addOrderLine);
 app.post("/api/payments", authMiddleware, addPayment);
 app.post("/api/student/order-lines", authMiddleware, postOrderLineForStudent); // <-- Tambahkan ini
 app.get("/api/orders/:id", authMiddleware, getOrderDetails);

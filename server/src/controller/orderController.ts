@@ -36,27 +36,27 @@ export const addOrderLine = async (c: Context) => {
       return c.json({ error: "order_id and status are required" }, 400);
     }
 
-    // Minimal salah satu harus ada
+    // Minimal salah satu ada (product atau course)
     if (!product_id && !course_id) {
       return c.json({ error: "At least one of product_id or course_id is required" }, 400);
     }
 
-    // Simpan order line, course_id dan product_id bisa null
-    const orderLine = await prisma.orderLine.create({
+    const newOrderLine = await prisma.orderLine.create({
       data: {
         order_id,
-        product_id: product_id ?? null,
-        course_id: course_id ?? null,
+        product_id: product_id || null,
+        course_id: course_id || null,
         status,
       },
     });
 
-    return c.json({ message: "Order line added", orderLine }, 201);
-  } catch (error: any) {
+    return c.json({ success: true, data: newOrderLine }, 201);
+  } catch (error) {
     console.error(error);
-    return c.json({ error: error.message }, 500);
+    return c.json({ error: "Failed to add order line" }, 500);
   }
 };
+
 
 // === STEP 3: Add Payment
 export const addPayment = async (c: Context) => {

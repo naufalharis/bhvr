@@ -1,10 +1,14 @@
+// src/components/Chart.tsx
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import Sidebar from "./pages/Sidebar";
+import Navbar from "./pages/Navbar";
 
 interface OrderLine {
   id: string;
   order_id: string;
-  product_id: string;
-  course_id?: string;
+  product_id: string | null;
+  course_id: string | null;
   status: string;
 }
 
@@ -12,8 +16,8 @@ export default function OrderLines() {
   const [orderLines, setOrderLines] = useState<OrderLine[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
-  // Ambil token dari localStorage
   const token = localStorage.getItem("token");
 
   const fetchOrderLines = async () => {
@@ -28,7 +32,18 @@ export default function OrderLines() {
       }
 
       const data = await res.json();
-      setOrderLines(data.orderLines || []);
+
+      const mappedLines: OrderLine[] = (data.orderLines || []).map(
+        (line: any) => ({
+          id: line.id,
+          order_id: line.order_id,
+          product_id: line.product_id ?? null,
+          course_id: line.course_id ?? null,
+          status: line.status,
+        })
+      );
+
+      setOrderLines(mappedLines);
     } catch (err: any) {
       console.error("Error:", err);
       setError(err.message || "Terjadi error saat fetch order_lines");
@@ -41,52 +56,79 @@ export default function OrderLines() {
     fetchOrderLines();
   }, []);
 
-  if (loading)
-    return <p style={{ padding: "20px", color: "#555" }}>Loading order lines...</p>;
-  if (error)
-    return <p style={{ padding: "20px", color: "red" }}>{error}</p>;
+  const handlePayment = (orderId: string) => {
+    navigate(`/payment/${orderId}`);
+  };
 
   return (
-    <div style={{ padding: "20px" }}>
-      <h2 style={titleStyle}>📦 Order Lines</h2>
+    <div style={{ display: "flex", minHeight: "100vh", background: "#f9fafb" }}>
+      {/* Sidebar */}
+      <Sidebar />
 
-      {orderLines.length === 0 ? (
-        <p style={{ marginTop: "12px", color: "#666" }}>
-          Belum ada order line.
-        </p>
-      ) : (
-        <div style={{ overflowX: "auto", marginTop: "16px" }}>
-          <table style={tableStyle}>
-            <thead>
-              <tr>
-                <th style={thStyle}>ID</th>
-                <th style={thStyle}>Order ID</th>
-                <th style={thStyle}>Product ID</th>
-                <th style={thStyle}>Course ID</th>
-                <th style={thStyle}>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {orderLines.map((line, index) => (
-                <tr
-                  key={line.id}
-                  style={{
-                    backgroundColor: index % 2 === 0 ? "#fff" : "#f9fafb",
-                  }}
-                >
-                  <td style={tdStyle}>{line.id}</td>
-                  <td style={tdStyle}>{line.order_id}</td>
-                  <td style={tdStyle}>{line.product_id}</td>
-                  <td style={tdStyle}>{line.course_id || "-"}</td>
-                  <td style={{ ...tdStyle, ...statusStyle(line.status) }}>
-                    {line.status}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      {/* Main Content */}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+        {/* Navbar */}
+        <Navbar />
+
+        {/* Content */}
+        <main style={{ padding: "20px", flex: 1 }}>
+          <h2 style={titleStyle}>📦 Order Lines</h2>
+
+          {loading ? (
+            <p style={{ padding: "20px", color: "#555" }}>
+              Loading order lines...
+            </p>
+          ) : error ? (
+            <p style={{ padding: "20px", color: "red" }}>{error}</p>
+          ) : orderLines.length === 0 ? (
+            <p style={{ marginTop: "12px", color: "#666" }}>
+              Belum ada order line.
+            </p>
+          ) : (
+            <div style={{ overflowX: "auto", marginTop: "16px" }}>
+              <table style={tableStyle}>
+                <thead>
+                  <tr>
+                    <th style={thStyle}>Order Line ID</th>
+                    <th style={thStyle}>Order ID</th>
+                    <th style={thStyle}>Product ID</th>
+                    <th style={thStyle}>Course ID</th>
+                    <th style={thStyle}>Status</th>
+                    <th style={thStyle}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {orderLines.map((line, index) => (
+                    <tr
+                      key={line.id}
+                      style={{
+                        backgroundColor:
+                          index % 2 === 0 ? "#fff" : "#f9fafb",
+                      }}
+                    >
+                      <td style={tdStyle}>{line.id}</td>
+                      <td style={tdStyle}>{line.order_id}</td>
+                      <td style={tdStyle}>{line.product_id || "-"}</td>
+                      <td style={tdStyle}>{line.course_id || "-"}</td>
+                      <td style={{ ...tdStyle, ...statusStyle(line.status) }}>
+                        {line.status}
+                      </td>
+                      <td style={tdStyle}>
+                        <button
+                          onClick={() => handlePayment(line.order_id)}
+                          style={buttonStyle}
+                        >
+                          💳 Bayar
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </main>
+      </div>
     </div>
   );
 }
@@ -124,7 +166,17 @@ const tdStyle: React.CSSProperties = {
   color: "#111827",
 };
 
-// 🔹 Dynamic status badge
+const buttonStyle: React.CSSProperties = {
+  padding: "6px 12px",
+  background: "#2563eb",
+  color: "#fff",
+  border: "none",
+  borderRadius: "6px",
+  cursor: "pointer",
+  fontSize: "14px",
+  fontWeight: 500,
+};
+
 const statusStyle = (status: string): React.CSSProperties => {
   let bg = "#e5e7eb";
   let color = "#374151";

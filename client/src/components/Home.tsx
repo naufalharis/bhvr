@@ -293,7 +293,7 @@ export default function Home({ onLogout }: AppProps) {
           body: JSON.stringify({
             order_id: orderId,
             product_id: product.id,
-            course_id: product.course_id,
+            course_id: product.course_id ?? null, // pastikan selalu dikirim
             status: "pending",
           }),
         });
@@ -309,8 +309,8 @@ export default function Home({ onLogout }: AppProps) {
           },
           body: JSON.stringify({
             order_id: orderId,
-            product_id: null,
-            course_id: cId,
+            product_id: null, // kalau langsung course, tidak wajib ada product_id
+            course_id: cId, // course_id selalu dikirim
             status: "pending",
           }),
         });
@@ -338,7 +338,10 @@ export default function Home({ onLogout }: AppProps) {
     <div className="app">
       <Sidebar />
       <div className="main">
-        <Navbar userName={user ? user.first_name : "Loading..."} onLogout={onLogout} />
+        <Navbar
+          userName={user ? user.first_name : "Loading..."}
+          onLogout={onLogout}
+        />
         <main className="content">
           <div className="profile-card">
             <h3>{user ? user.first_name : "Loading..."}</h3>
@@ -377,7 +380,11 @@ export default function Home({ onLogout }: AppProps) {
                 courses.map((course) => (
                   <div key={course.id} className="course-card">
                     {course.cover && (
-                      <img src={course.cover} alt={course.title} className="course-cover" />
+                      <img
+                        src={course.cover}
+                        alt={course.title}
+                        className="course-cover"
+                      />
                     )}
                     <div className="course-info">
                       <Link to={`/chapter/${course.id}`}>
@@ -390,13 +397,13 @@ export default function Home({ onLogout }: AppProps) {
                             className="px-3 py-1 bg-green-500 text-white rounded"
                             onClick={() => handleEdit(course)}
                           >
-                            ✏️ Edit
+                            ✏ Edit
                           </button>
                           <button
                             className="px-3 py-1 bg-red-500 text-white rounded"
                             onClick={() => handleDelete(course.id)}
                           >
-                            🗑️ Delete
+                            🗑 Delete
                           </button>
                         </div>
                       )}
@@ -450,7 +457,10 @@ export default function Home({ onLogout }: AppProps) {
                     {product.course_id && (
                       <span style={{ color: "gray", fontSize: 12 }}>
                         {" "}
-                        ({courses.find((c) => c.id === product.course_id)?.title || "Course"})
+                        (
+                        {courses.find((c) => c.id === product.course_id)?.title ||
+                          "Course"}
+                        )
                       </span>
                     )}
                   </span>
@@ -498,7 +508,9 @@ export default function Home({ onLogout }: AppProps) {
       {showModal && user?.role === "instructor" && (
         <div className="modal-overlay">
           <div className="modal">
-            <h2 className="mb-4">{courseId ? "Edit Course" : "Add New Course"}</h2>
+            <h2 className="mb-4">
+              {courseId ? "Edit Course" : "Add New Course"}
+            </h2>
             <form onSubmit={handleSubmit} className="space-y-3">
               <input
                 type="text"
@@ -533,9 +545,18 @@ export default function Home({ onLogout }: AppProps) {
                 <option value="bundle">Bundle</option>
               </select>
 
-              <input type="file" accept="image/*" onChange={handleFileChange} className="w-full" />
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                className="w-full"
+              />
               {coverPreview && (
-                <img src={coverPreview} alt="Preview" className="w-32 h-32 object-cover mt-2" />
+                <img
+                  src={coverPreview}
+                  alt="Preview"
+                  className="w-32 h-32 object-cover mt-2"
+                />
               )}
               <div className="flex justify-end space-x-2">
                 <button
