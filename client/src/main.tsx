@@ -16,8 +16,9 @@ import Register from "./components/Register";
 import Chapter from "./components/Chapter";
 import ChapterContents from "./components/ChapterContent";
 import Chart from "./components/Chart"; // ✅ import halaman Chart
+import Payment from "./components/Payment"; // ✅ import halaman Payment
 
-// ✅ Komponen ProtectedRoute
+// ✅ Komponen ProtectedRoute (cukup sekali aja)
 function ProtectedRoute({
   isLoggedIn,
   children,
@@ -32,10 +33,8 @@ function ProtectedRoute({
 }
 
 function App() {
-  // ✅ ambil status login langsung dari localStorage sejak awal
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
-    return localStorage.getItem("isLoggedIn") === "true";
-  });
+  // default: user belum login
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
 
   // setiap kali isLoggedIn berubah, update localStorage
   useEffect(() => {
@@ -99,7 +98,7 @@ function App() {
         }
       />
 
-      {/* Chapter Contents route dengan parameter chapterId */}
+      {/* Chapter Contents */}
       <Route
         path="/chapter/:chapterId/contents"
         element={
@@ -109,12 +108,22 @@ function App() {
         }
       />
 
-      {/* ✅ Chart route */}
+      {/* Chart */}
       <Route
         path="/chart"
         element={
           <ProtectedRoute isLoggedIn={isLoggedIn}>
             <Chart />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* ✅ Payment */}
+      <Route
+        path="/payment/:orderId"
+        element={
+          <ProtectedRoute isLoggedIn={isLoggedIn}>
+            <PaymentWrapper />
           </ProtectedRoute>
         }
       />
@@ -125,7 +134,7 @@ function App() {
   );
 }
 
-// Wrapper Register agar bisa redirect setelah sukses
+// ✅ Wrapper Register agar redirect ke login setelah register
 function RegisterRedirect() {
   const navigate = useNavigate();
   const handleRegister = () => {
@@ -134,11 +143,18 @@ function RegisterRedirect() {
   return <Register onRegister={handleRegister} />;
 }
 
-// Wrapper untuk ChapterContents agar bisa membaca chapterId dari param
+// ✅ Wrapper ChapterContents agar bisa ambil param
 function ChapterContentsWrapper() {
   const { chapterId } = useParams<{ chapterId: string }>();
   if (!chapterId) return <div>Chapter ID is missing</div>;
   return <ChapterContents chapterId={chapterId} />;
+}
+
+// ✅ Wrapper Payment agar bisa ambil orderId dari param
+function PaymentWrapper() {
+  const { orderId } = useParams<{ orderId: string }>();
+  if (!orderId) return <div>Order ID is missing</div>;
+  return <Payment orderId={orderId} />;
 }
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
