@@ -17,8 +17,9 @@ import Chapter from "./components/Chapter";
 import ChapterContents from "./components/ChapterContent";
 import Chart from "./components/Chart"; // ✅ import halaman Chart
 import Payment from "./components/Payment"; // ✅ import halaman Payment
+import Enrolled from "./components/Enrolled"; // ✅ import halaman Enrolled
 
-// ✅ Komponen ProtectedRoute (cukup sekali aja)
+// ✅ Komponen ProtectedRoute
 function ProtectedRoute({
   isLoggedIn,
   children,
@@ -33,10 +34,12 @@ function ProtectedRoute({
 }
 
 function App() {
-  // default: user belum login
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  // ✅ baca status login dari localStorage
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(
+    localStorage.getItem("isLoggedIn") === "true"
+  );
 
-  // setiap kali isLoggedIn berubah, update localStorage
+  // update localStorage setiap kali isLoggedIn berubah
   useEffect(() => {
     localStorage.setItem("isLoggedIn", isLoggedIn.toString());
   }, [isLoggedIn]);
@@ -45,7 +48,7 @@ function App() {
     localStorage.removeItem("isLoggedIn");
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    localStorage.removeItem("role"); // ✅ pastikan role ikut dibersihkan
+    localStorage.removeItem("role");
     setIsLoggedIn(false);
   };
 
@@ -118,12 +121,22 @@ function App() {
         }
       />
 
-      {/* ✅ Payment */}
+      {/* Payment */}
       <Route
         path="/payment/:orderId"
         element={
           <ProtectedRoute isLoggedIn={isLoggedIn}>
             <PaymentWrapper />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Enrolled */}
+      <Route
+        path="/enrolled"
+        element={
+          <ProtectedRoute isLoggedIn={isLoggedIn}>
+            <Enrolled />
           </ProtectedRoute>
         }
       />

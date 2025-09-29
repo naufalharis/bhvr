@@ -11,6 +11,7 @@ import courseCategory from './controller/courseCategoryController'
 import { addAffiliateCourse, listAffiliateCourses } from './controller/affiliateController';
 import { createOrder, addOrderLine, addPayment, getOrderDetails, getOrderLinesByOrder, getPendingOrderLinesForStudent, postOrderLineForStudent } from "./controller/orderController";
 import { getAllProducts, getProductTypes, getProductById } from './controller/productController';
+import { getEnrolledCourses } from './controller/enrolledController';
 
 const app = new Hono()
 app.route("/api/course-categories", courseCategory);
@@ -40,6 +41,7 @@ app.get("/affiliates/:affiliateId/courses", authMiddleware, listAffiliateCourses
 app.post("/api/orders", authMiddleware, createOrder);
 app.post("/api/order-lines", authMiddleware, addOrderLine);
 app.post("/api/payments", authMiddleware, addPayment);
+app.get("/api/enrolled", authMiddleware, getEnrolledCourses);
 app.post("/api/student/order-lines", authMiddleware, postOrderLineForStudent); // <-- Tambahkan ini
 app.get("/api/orders/:id", authMiddleware, getOrderDetails);
 app.get("/api/order-lines", authMiddleware, getOrderLinesByOrder);
