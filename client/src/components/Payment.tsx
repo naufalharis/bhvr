@@ -16,10 +16,19 @@ export default function Payment() {
       .padStart(3, "0")}`
   );
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+  const [message, setMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const [enrolled, setEnrolled] = useState<any[]>([]);
+
+  const handlePayment = async () => {
+    if (!orderId) {
+      setMessage({ type: "error", text: "❌ Order ID tidak ditemukan" });
+      return;
+    }
+
     setLoading(true);
     setMessage(null);
 
@@ -38,36 +47,36 @@ export default function Payment() {
         }),
       });
 
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Gagal membuat payment");
-      }
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Gagal membuat payment");
 
-      setMessage("✅ Payment berhasil dibuat!");
-      setTimeout(() => navigate("/chart"), 1500); // kembali ke Chart
+      setMessage({
+        type: "success",
+        text: "✅ Payment berhasil & item sudah di-enroll!",
+      });
+      setEnrolled(data.enrolled || []);
+
+      setTimeout(() => navigate("/enrolled"), 1500);
     } catch (err: any) {
-      setMessage(`❌ Error: ${err.message}`);
+      setMessage({ type: "error", text: `❌ Error: ${err.message}` });
     } finally {
       setLoading(false);
     }
   };
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await handlePayment();
+  };
+
   return (
     <div style={{ display: "flex", minHeight: "100vh", background: "#f9fafb" }}>
-      {/* Sidebar */}
       <Sidebar />
-
-      {/* Main Content */}
       <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-        {/* Navbar */}
         <Navbar />
-
-        {/* Content */}
         <main style={{ padding: "20px", flex: 1 }}>
           <h2 style={titleStyle}>💳 Payment</h2>
-          <p style={{ marginBottom: "20px" }}>
-            Order ID: <strong>{orderId}</strong>
-          </p>
+          <p>Order ID: <strong>{orderId}</strong></p>
 
           <form onSubmit={handleSubmit} style={formStyle}>
             <label style={labelStyle}>Metode Pembayaran:</label>
@@ -96,14 +105,40 @@ export default function Payment() {
             </button>
           </form>
 
-          {message && <p style={{ marginTop: "20px" }}>{message}</p>}
+          {message && (
+            <p
+              style={{
+                marginTop: "20px",
+                color: message.type === "success" ? "green" : "red",
+                fontWeight: 500,
+              }}
+            >
+              {message.text}
+            </p>
+          )}
+
+          {enrolled.length > 0 && (
+            <div style={{ marginTop: "20px" }}>
+              <h3>🎉 Enrolled Item:</h3>
+              <ul>
+                {enrolled.map((ec) => (
+                  <li key={ec.id}>
+                    {ec.course_id
+                      ? `Course: ${ec.course?.title || ec.course_id}`
+                      : ec.product_id
+                      ? `Product: ${ec.product?.title || ec.product_id}`
+                      : "Non-course item"}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </main>
       </div>
     </div>
   );
 }
 
-// Styles
 const titleStyle: React.CSSProperties = {
   fontSize: "20px",
   fontWeight: "600",

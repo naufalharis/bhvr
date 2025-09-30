@@ -145,7 +145,6 @@ model EnrolledCourse {
   order_id      String?
   bundle_id     String?
   enrolled_date DateTime @default(now())
-  order         String?
 
   user     User         @relation(fields: [user_id], references: [id])
   course   Course       @relation(fields: [course_id], references: [id])

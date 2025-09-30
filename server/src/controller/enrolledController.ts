@@ -3,12 +3,14 @@ import type { Context } from "hono";
 
 const prisma = new PrismaClient();
 
-
 export const getEnrolledCourses = async (c: Context) => {
   try {
     const user = c.get("user");
     if (!user || user.role !== "student") {
-      return c.json({ error: "Unauthorized. Only students can access enrolled courses." }, 401);
+      return c.json(
+        { error: "Unauthorized. Only students can access enrolled courses." },
+        401
+      );
     }
 
     const enrolled = await prisma.enrolledCourse.findMany({
@@ -17,11 +19,12 @@ export const getEnrolledCourses = async (c: Context) => {
         course: true,     // detail course
         orderRef: true,  // detail order
       },
+      orderBy: { enrolled_date: "desc" },
     });
 
-    return c.json({ enrolled });
+    return c.json({ enrolled }, 200);
   } catch (error: any) {
-    console.error(error);
+    console.error("getEnrolledCourses error:", error);
     return c.json({ error: error.message }, 500);
   }
 };

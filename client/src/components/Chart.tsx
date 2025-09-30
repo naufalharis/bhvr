@@ -1,4 +1,4 @@
-// src/components/Chart.tsx
+// src/components/OrderLines.tsx
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "./pages/Sidebar";
@@ -9,6 +9,7 @@ interface OrderLine {
   order_id: string;
   product_id: string | null;
   course_id: string | null;
+  course_name?: string | null;
   status: string;
 }
 
@@ -16,13 +17,14 @@ export default function OrderLines() {
   const [orderLines, setOrderLines] = useState<OrderLine[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const navigate = useNavigate();
 
   const token = localStorage.getItem("token");
+  const navigate = useNavigate();
 
+  // === Fetch Pending Order Lines ===
   const fetchOrderLines = async () => {
     try {
-      const res = await fetch("/api/order-lines", {
+      const res = await fetch("/api/order-lines/pending", {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -39,6 +41,7 @@ export default function OrderLines() {
           order_id: line.order_id,
           product_id: line.product_id ?? null,
           course_id: line.course_id ?? null,
+          course_name: line.course?.title ?? "-",
           status: line.status,
         })
       );
@@ -56,10 +59,6 @@ export default function OrderLines() {
     fetchOrderLines();
   }, []);
 
-  const handlePayment = (orderId: string) => {
-    navigate(`/payment/${orderId}`);
-  };
-
   return (
     <div style={{ display: "flex", minHeight: "100vh", background: "#f9fafb" }}>
       {/* Sidebar */}
@@ -72,7 +71,7 @@ export default function OrderLines() {
 
         {/* Content */}
         <main style={{ padding: "20px", flex: 1 }}>
-          <h2 style={titleStyle}>📦 Order Lines</h2>
+          <h2 style={titleStyle}>📦 Order Saya</h2>
 
           {loading ? (
             <p style={{ padding: "20px", color: "#555" }}>
@@ -82,7 +81,7 @@ export default function OrderLines() {
             <p style={{ padding: "20px", color: "red" }}>{error}</p>
           ) : orderLines.length === 0 ? (
             <p style={{ marginTop: "12px", color: "#666" }}>
-              Belum ada order line.
+              Kamu belum pernah order course.
             </p>
           ) : (
             <div style={{ overflowX: "auto", marginTop: "16px" }}>
@@ -91,8 +90,7 @@ export default function OrderLines() {
                   <tr>
                     <th style={thStyle}>Order Line ID</th>
                     <th style={thStyle}>Order ID</th>
-                    <th style={thStyle}>Product ID</th>
-                    <th style={thStyle}>Course ID</th>
+                    <th style={thStyle}>Course</th>
                     <th style={thStyle}>Status</th>
                     <th style={thStyle}>Actions</th>
                   </tr>
@@ -102,24 +100,26 @@ export default function OrderLines() {
                     <tr
                       key={line.id}
                       style={{
-                        backgroundColor:
-                          index % 2 === 0 ? "#fff" : "#f9fafb",
+                        backgroundColor: index % 2 === 0 ? "#fff" : "#f9fafb",
                       }}
                     >
                       <td style={tdStyle}>{line.id}</td>
                       <td style={tdStyle}>{line.order_id}</td>
-                      <td style={tdStyle}>{line.product_id || "-"}</td>
-                      <td style={tdStyle}>{line.course_id || "-"}</td>
+                      <td style={tdStyle}>
+                        {line.course_name || line.course_id || "-"}
+                      </td>
                       <td style={{ ...tdStyle, ...statusStyle(line.status) }}>
                         {line.status}
                       </td>
                       <td style={tdStyle}>
-                        <button
-                          onClick={() => handlePayment(line.order_id)}
-                          style={buttonStyle}
-                        >
-                          💳 Bayar
-                        </button>
+                        {line.status === "pending" && (
+                          <button
+                            onClick={() => navigate(`/payment/${line.order_id}`)}
+                            style={buttonStyle}
+                          >
+                            💳 Bayar
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}

@@ -9,7 +9,7 @@ import {
 import { authMiddleware } from "./middleware/authMiddleware";
 import courseCategory from './controller/courseCategoryController'
 import { addAffiliateCourse, listAffiliateCourses } from './controller/affiliateController';
-import { createOrder, addOrderLine, addPayment, getOrderDetails, getOrderLinesByOrder, getPendingOrderLinesForStudent, postOrderLineForStudent } from "./controller/orderController";
+import { createOrder, addOrderLine, addPayment, getOrderDetails, getOrderLinesByOrder, getPendingOrderLinesForStudent } from "./controller/orderController";
 import { getAllProducts, getProductTypes, getProductById } from './controller/productController';
 import { getEnrolledCourses } from './controller/enrolledController';
 
@@ -42,8 +42,7 @@ app.post("/api/orders", authMiddleware, createOrder);
 app.post("/api/order-lines", authMiddleware, addOrderLine);
 app.post("/api/payments", authMiddleware, addPayment);
 app.get("/api/enrolled", authMiddleware, getEnrolledCourses);
-app.post("/api/student/order-lines", authMiddleware, postOrderLineForStudent); // <-- Tambahkan ini
-app.get("/api/orders/:id", authMiddleware, getOrderDetails);
+app.get("/api/orders/:orderId/lines", authMiddleware, getOrderDetails);
 app.get("/api/order-lines", authMiddleware, getOrderLinesByOrder);
 app.get("/api/order-lines/pending", authMiddleware, getPendingOrderLinesForStudent);
 

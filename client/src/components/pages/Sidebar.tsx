@@ -11,8 +11,8 @@ export default function Sidebar() {
           <li>
             <a href="/home" className="active">Dashboard</a>
           </li>
-          <li><a href="/enrolled">📝 Assignments</a></li>
-          <li><a href="#">📈 Progress</a></li>
+          <li><a href="/enrolled"> Assignments</a></li>
+          <li><a href="/chart"> Keranjang</a></li>
           <li><a href="#">👥 Community</a></li>
         </ul>
       </nav>
