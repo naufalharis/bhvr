@@ -12,6 +12,7 @@ import { addAffiliateCourse, listAffiliateCourses } from './controller/affiliate
 import { createOrder, addOrderLine, addPayment, getOrderDetails, getOrderLinesByOrder, getPendingOrderLinesForStudent } from "./controller/orderController";
 import { getAllProducts, getProductTypes, getProductById } from './controller/productController';
 import { getEnrolledCourses } from './controller/enrolledController';
+import { createProductDetail, getProductDetails } from './controller/productDetailController';
 
 const app = new Hono()
 app.route("/api/course-categories", courseCategory);
@@ -34,6 +35,9 @@ app.post("/api/chapters/:chapterId/contents", authMiddleware, addChapterContent)
 app.get("/api/chapters/:chapterId/contents", authMiddleware, getContents);
 app.put("/api/contents/:contentId", authMiddleware, updateContent);
 app.delete("/api/contents/:contentId", authMiddleware, deleteContent);
+// product details (instructor only)
+app.post("/api/product-details", authMiddleware, createProductDetail);
+app.get("/api/product-details", authMiddleware, getProductDetails);
 // affiliates
 app.post("/affiliates/:affiliateId/courses", authMiddleware, addAffiliateCourse);
 app.get("/affiliates/:affiliateId/courses", authMiddleware, listAffiliateCourses);
