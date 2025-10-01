@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import Sidebar from "./pages/Sidebar";
 import Navbar from "./pages/Navbar";
 import "../styles/home.css";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 interface AppProps {
   onLogout: () => void;
@@ -41,16 +41,28 @@ export default function Home({ onLogout }: AppProps) {
   const [user, setUser] = useState<User | null>(null);
   const [courses, setCourses] = useState<Course[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
-  const [showOrderModal, setShowOrderModal] = useState(false);
+  const [showInstructorModal, setShowInstructorModal] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
-  const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
-  const [orderDate, setOrderDate] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
+  // Modal states
+  const [modalStep, setModalStep] = useState<"course" | "product" | "details">("course");
+  const [courseId, setCourseId] = useState<string | null>(null);
+  const [productId, setProductId] = useState<string | null>(null);
+
+  // Form states
+  const [courseTitle, setCourseTitle] = useState("");
+  const [courseType, setCourseType] = useState<"single" | "bundle">("single");
+  const [courseCover, setCourseCover] = useState("");
+  const [courseOverview, setCourseOverview] = useState("");
+  const [courseSlug, setCourseSlug] = useState("");
+
+  const [productTitle, setProductTitle] = useState("");
+  const [productOverview, setProductOverview] = useState("");
+  const [productCover, setProductCover] = useState("");
+  const [productType, setProductType] = useState<"course" | "bundle" | "merchandise">("course");
+  const [productPrice, setProductPrice] = useState<number>(0);
 
   const token = localStorage.getItem("token");
-  const navigate = useNavigate();
 
   /** Ambil user dari localStorage */
   useEffect(() => {
@@ -71,7 +83,10 @@ export default function Home({ onLogout }: AppProps) {
       const res = await fetch("/api/courses", {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) return;
+      if (!res.ok) {
+        console.error("Fetch courses failed:", await res.text());
+        return;
+      }
       const data: Course[] = await res.json();
       setCourses(data);
     } catch (error) {
@@ -79,144 +94,263 @@ export default function Home({ onLogout }: AppProps) {
     }
   };
 
-  /** Fetch products */
-  const fetchProducts = async () => {
-    if (!token) return;
-    try {
-      const res = await fetch("/api/product", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) return;
-      const data = await res.json();
-      setProducts(Array.isArray(data) ? data : data.data || []);
-    } catch (error) {
-      console.error("Error fetching products:", error);
-      setProducts([]);
-    }
-  };
-
   useEffect(() => {
-    if (token) {
-      fetchCourses();
-      if (user?.role === "student") {
-        fetchProducts();
-      }
-      setLoading(false);
-    }
-  }, [token, user]);
+    if (token) fetchCourses();
+  }, [token]);
 
-  /** Toggle select product */
-  const toggleSelectProduct = (productId: string) => {
-    setSelectedProducts((prev) =>
-      prev.includes(productId)
-        ? prev.filter((id) => id !== productId)
-        : [...prev, productId]
-    );
-  };
-
-  /** Toggle select course */
-  const toggleSelectCourse = (courseId: string) => {
-    setSelectedCourses((prev) =>
-      prev.includes(courseId)
-        ? prev.filter((id) => id !== courseId)
-        : [...prev, courseId]
-    );
-  };
-
-  /** Submit order + order lines */
-  const handleOrderSubmit = async () => {
-    if (!token || !user) return;
-    if (selectedProducts.length === 0 && selectedCourses.length === 0) {
-      alert("Pilih minimal satu product atau course untuk order.");
+  /** Submit course form */
+  const handleCourseSubmit = async () => {
+    if (!courseTitle || !courseOverview || !courseSlug || !courseCover) {
+      alert("Lengkapi semua field course!");
       return;
     }
-    if (!orderDate) {
-      alert("Pilih tanggal order terlebih dahulu.");
-      return;
-    }
+    if (!token) return;
+
     setLoading(true);
     try {
-      // step 1: create order
-      const resOrder = await fetch("/api/orders", {
+      const res = await fetch("/api/courses", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ status: "pending", order_date: orderDate }),
+        body: JSON.stringify({
+          title: courseTitle,
+          course_type: courseType,
+          overview: courseOverview,
+          slug: courseSlug,
+          cover: courseCover, // URL atau base64
+        }),
       });
-      if (!resOrder.ok) throw new Error("Gagal membuat order");
-      const orderData = await resOrder.json();
-      const orderId = orderData.order.id;
 
-      // step 2: create order-lines
-      for (const pId of selectedProducts) {
-        const product = products.find((p) => p.id === pId);
-        if (!product) continue;
-        await fetch("/api/order-lines", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            order_id: orderId,
-            product_id: product.id,
-            course_id: product.course_id ?? null,
-            status: "pending",
-          }),
-        });
-      }
+      const text = await res.text();
+      console.log("Course submit response:", res.status, text);
 
-      for (const cId of selectedCourses) {
-        await fetch("/api/order-lines", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            order_id: orderId,
-            product_id: null,
-            course_id: cId,
-            status: "pending",
-          }),
-        });
-      }
+      if (!res.ok) throw new Error(text || "Gagal membuat course");
 
-      alert("✅ Order berhasil dibuat!");
-      setSelectedProducts([]);
-      setSelectedCourses([]);
-      setOrderDate("");
-      setShowOrderModal(false);
-
-      // redirect ke halaman payment
-      navigate(`/payment/${orderId}`);
+      const data = JSON.parse(text);
+      setCourseId(data.course.id);
+      setModalStep("product");
     } catch (err: any) {
-      alert(`Error membuat order: ${err.message}`);
+      console.error("Error creating course:", err);
+      alert(err.message);
     } finally {
       setLoading(false);
     }
   };
 
-  /** Filter product by search */
-  const filteredProducts = products.filter((p) =>
-    p.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  /** Submit product form */
+  const handleProductSubmit = async () => {
+    if (!productTitle || !productOverview || !productCover || !courseId) {
+      alert("Lengkapi semua field product!");
+      return;
+    }
+    if (!token) return;
+
+    setLoading(true);
+    try {
+      const res = await fetch("/api/products", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title: productTitle,
+          overview: productOverview,
+          cover: productCover,
+          product_type: productType,
+          price: productPrice,
+          course_id: courseId,
+        }),
+      });
+
+      const text = await res.text();
+      console.log("Product submit response:", res.status, text);
+
+      if (!res.ok) throw new Error(text || "Gagal membuat product");
+
+      const data = JSON.parse(text);
+      setProductId(data.product.id);
+      setModalStep("details");
+    } catch (err: any) {
+      console.error("Error creating product:", err);
+      alert(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /** Render modal content */
+  const renderModalContent = () => {
+    if (modalStep === "course") {
+      return (
+        <>
+          <h2 className="mb-4 font-bold text-lg">Buat Course Baru</h2>
+          <input
+            type="text"
+            placeholder="Title"
+            value={courseTitle}
+            onChange={(e) => setCourseTitle(e.target.value)}
+            className="w-full border px-2 py-1 rounded mb-2"
+          />
+          <select
+            value={courseType}
+            onChange={(e) => setCourseType(e.target.value as "single" | "bundle")}
+            className="w-full border px-2 py-1 rounded mb-2"
+          >
+            <option value="single">Single</option>
+            <option value="bundle">Bundle</option>
+          </select>
+          <input
+            type="text"
+            placeholder="Cover URL"
+            value={courseCover}
+            onChange={(e) => setCourseCover(e.target.value)}
+            className="w-full border px-2 py-1 rounded mb-2"
+          />
+          <textarea
+            placeholder="Overview"
+            value={courseOverview}
+            onChange={(e) => setCourseOverview(e.target.value)}
+            className="w-full border px-2 py-1 rounded mb-2"
+          />
+          <input
+            type="text"
+            placeholder="Slug"
+            value={courseSlug}
+            onChange={(e) => setCourseSlug(e.target.value)}
+            className="w-full border px-2 py-1 rounded mb-2"
+          />
+          <div className="flex justify-end space-x-2">
+            <button
+              className="px-4 py-2 bg-gray-300 rounded"
+              onClick={() => setShowInstructorModal(false)}
+            >
+              Cancel
+            </button>
+            <button
+              className="px-4 py-2 bg-blue-500 text-white rounded"
+              onClick={handleCourseSubmit}
+              disabled={loading}
+            >
+              {loading ? "Processing..." : "Buat Course"}
+            </button>
+          </div>
+        </>
+      );
+    } else if (modalStep === "product") {
+      return (
+        <>
+          <h2 className="mb-4 font-bold text-lg">Tambah Product</h2>
+          <input
+            type="text"
+            placeholder="Title"
+            value={productTitle}
+            onChange={(e) => setProductTitle(e.target.value)}
+            className="w-full border px-2 py-1 rounded mb-2"
+          />
+          <textarea
+            placeholder="Overview"
+            value={productOverview}
+            onChange={(e) => setProductOverview(e.target.value)}
+            className="w-full border px-2 py-1 rounded mb-2"
+          />
+          <input
+            type="text"
+            placeholder="Cover URL"
+            value={productCover}
+            onChange={(e) => setProductCover(e.target.value)}
+            className="w-full border px-2 py-1 rounded mb-2"
+          />
+          <select
+            value={productType}
+            onChange={(e) =>
+              setProductType(e.target.value as "course" | "bundle" | "merchandise")
+            }
+            className="w-full border px-2 py-1 rounded mb-2"
+          >
+            <option value="course">Course</option>
+            <option value="bundle">Bundle</option>
+            <option value="merchandise">Merchandise</option>
+          </select>
+          <input
+            type="number"
+            placeholder="Price"
+            value={productPrice}
+            onChange={(e) => setProductPrice(parseFloat(e.target.value))}
+            className="w-full border px-2 py-1 rounded mb-2"
+          />
+          <div className="flex justify-end space-x-2">
+            <button
+              className="px-4 py-2 bg-gray-300 rounded"
+              onClick={() => setModalStep("course")}
+            >
+              Back
+            </button>
+            <button
+              className="px-4 py-2 bg-green-500 text-white rounded"
+              onClick={handleProductSubmit}
+              disabled={loading}
+            >
+              {loading ? "Processing..." : "Tambah Product"}
+            </button>
+          </div>
+        </>
+      );
+    } else if (modalStep === "details") {
+      const course = courses.find((c) => c.id === courseId);
+      return (
+        <>
+          <h2 className="mb-4 font-bold text-lg">Product & Course Details</h2>
+          <div className="mb-2">
+            <h3 className="font-semibold">Course:</h3>
+            <p>{course?.title}</p>
+          </div>
+          <div className="mb-2">
+            <h3 className="font-semibold">Product:</h3>
+            <p>{productTitle}</p>
+            <p>Type: {productType}</p>
+            <p>Price: Rp{productPrice}</p>
+          </div>
+          <div className="flex justify-end">
+            <button
+              className="px-4 py-2 bg-blue-500 text-white rounded"
+              onClick={() => {
+                setShowInstructorModal(false);
+                fetchCourses();
+                // reset modal states
+                setModalStep("course");
+                setCourseId(null);
+                setProductId(null);
+                setCourseTitle("");
+                setCourseOverview("");
+                setCourseSlug("");
+                setCourseCover("");
+                setProductTitle("");
+                setProductOverview("");
+                setProductCover("");
+                setProductPrice(0);
+                setProductType("course");
+              }}
+            >
+              Close
+            </button>
+          </div>
+        </>
+      );
+    }
+  };
 
   return (
     <div className="app">
       <Sidebar />
       <div className="main">
-        <Navbar
-          userName={user ? user.first_name : "Loading..."}
-          onLogout={onLogout}
-        />
+        <Navbar userName={user ? user.first_name : "Loading..."} onLogout={onLogout} />
         <main className="content">
           <div className="profile-card">
             <h3>{user ? user.first_name : "Loading..."}</h3>
             <p>Role: {user?.role || "Unknown"}</p>
-            <button>View Profile</button>
           </div>
 
           {/* Course Section */}
@@ -226,22 +360,12 @@ export default function Home({ onLogout }: AppProps) {
               {user?.role === "instructor" && (
                 <button
                   className="px-4 py-2 rounded-lg bg-blue-500 text-white"
-                  onClick={() => navigate("/create-course")}
+                  onClick={() => setShowInstructorModal(true)}
                 >
                   ➕ Buat Course Baru
                 </button>
               )}
-              {user?.role === "student" && (
-                <button
-                  className="px-4 py-2 rounded-lg bg-green-500 text-white"
-                  onClick={() => setShowOrderModal(true)}
-                >
-                  🛒 Order
-                </button>
-              )}
             </div>
-
-            {/* Card Courses */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {courses.length > 0 ? (
                 courses.map((course) => (
@@ -255,15 +379,7 @@ export default function Home({ onLogout }: AppProps) {
                       className="w-full h-40 object-cover rounded mb-2"
                     />
                     <h3 className="font-bold text-lg">{course.title}</h3>
-                    <p className="text-sm text-gray-600 line-clamp-3">
-                      {course.overview}
-                    </p>
-                    <Link
-                      to={`/course/${course.slug}`}
-                      className="mt-2 inline-block text-blue-500 hover:underline"
-                    >
-                      Lihat Detail
-                    </Link>
+                    <p className="text-sm text-gray-600 line-clamp-3">{course.overview}</p>
                   </div>
                 ))
               ) : (
@@ -274,63 +390,10 @@ export default function Home({ onLogout }: AppProps) {
         </main>
       </div>
 
-      {/* Modal Order */}
-      {showOrderModal && user?.role === "student" && (
+      {/* Instructor Modal */}
+      {showInstructorModal && user?.role === "instructor" && (
         <div className="modal-overlay">
-          <div className="modal">
-            <h2 className="mb-4">Order</h2>
-
-            <input
-              type="text"
-              placeholder="Search product..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-2 py-1 border rounded mb-3"
-            />
-
-            <div className="mb-3">
-              <label className="block mb-1">Tanggal Order</label>
-              <input
-                type="date"
-                value={orderDate}
-                onChange={(e) => setOrderDate(e.target.value)}
-                className="w-full px-2 py-1 border rounded"
-                required
-              />
-            </div>
-
-            <div className="mb-2 font-semibold">Products</div>
-            {filteredProducts.map((product) => (
-              <div key={product.id} className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  checked={selectedProducts.includes(product.id)}
-                  onChange={() => toggleSelectProduct(product.id)}
-                />
-                <span>
-                  {product.title} - Rp{product.price}
-                </span>
-              </div>
-            ))}
-
-            <div className="flex justify-end space-x-2 mt-4">
-              <button
-                type="button"
-                className="px-4 py-2 bg-gray-300 rounded"
-                onClick={() => setShowOrderModal(false)}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="px-4 py-2 bg-green-500 text-white rounded"
-                onClick={handleOrderSubmit}
-                disabled={loading}
-              >
-                {loading ? "Processing..." : "✅ Submit Order"}
-              </button>
-            </div>
-          </div>
+          <div className="modal">{renderModalContent()}</div>
         </div>
       )}
     </div>
