@@ -210,53 +210,65 @@ export default function Home({ onLogout }: AppProps) {
   };
 
   /** Submit create course (instructor only) */
-  const handleCreateCourse = async () => {
-    if (!token || !user) return;
-    if (!courseForm.title || !courseForm.slug) {
-      alert("Title dan Slug wajib diisi!");
-      return;
-    }
-    if (!courseForm.course_type) {
-      alert("Pilih course type terlebih dahulu!");
-      return;
-    }
-    setLoading(true);
-    try {
-      const formData = new FormData();
-      formData.append("title", courseForm.title);
-      formData.append("overview", courseForm.overview);
-      formData.append("slug", courseForm.slug);
-      formData.append("course_type", courseForm.course_type);
-      if (courseForm.cover) {
-        formData.append("cover", courseForm.cover);
-      }
+  /** Submit create course (instructor only) */
+const handleCreateCourse = async () => {
+  if (!token || !user) return;
+  if (!courseForm.title || !courseForm.slug) {
+    alert("Title dan Slug wajib diisi!");
+    return;
+  }
+  if (!courseForm.course_type) {
+    alert("Pilih course type terlebih dahulu!");
+    return;
+  }
+  setLoading(true);
 
-      const res = await fetch("/api/courses", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-      });
-      if (!res.ok) throw new Error("Gagal membuat course");
-      await res.json();
+  try {
+    // body JSON sesuai schema BE
+    const body = {
+      title: courseForm.title,
+      overview: courseForm.overview,
+      slug: courseForm.slug,
+      course_type: courseForm.course_type.toLowerCase(), // 👈 fix disini
+      cover: courseForm.cover ? courseForm.cover.name : null, 
+      // ⚠️ sementara hanya kirim nama file, karena BE belum siap upload file
+    };
 
-      alert("✅ Course berhasil dibuat!");
-      setShowCourseModal(false);
-      setCourseForm({
-        title: "",
-        overview: "",
-        cover: null,
-        course_type: "",
-        slug: "",
-      });
-      fetchCourses();
-    } catch (err: any) {
-      alert(`Error membuat course: ${err.message}`);
-    } finally {
-      setLoading(false);
-    }
-  };
+    console.log("📤 Sending create course request:", body);
+
+    const res = await fetch("/api/courses", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(body),
+    });
+
+    console.log("📥 Response status:", res.status);
+
+    const data = await res.json().catch(() => ({}));
+    console.log("📥 Response body:", data);
+
+    if (!res.ok) throw new Error(data.error || "Gagal membuat course");
+
+    alert("✅ Course berhasil dibuat!");
+    setShowCourseModal(false);
+    setCourseForm({
+      title: "",
+      overview: "",
+      cover: null,
+      course_type: "",
+      slug: "",
+    });
+    fetchCourses();
+  } catch (err: any) {
+    console.error("❌ Error membuat course:", err);
+    alert(`Error membuat course: ${err.message}`);
+  } finally {
+    setLoading(false);
+  }
+};
 
   /** Filter product by search */
   const filteredProducts = products.filter((p) =>
@@ -435,8 +447,8 @@ export default function Home({ onLogout }: AppProps) {
               className="w-full px-2 py-1 border rounded mb-3"
             >
               <option value="">-- Pilih Course Type --</option>
-              <option value="SINGLE">SINGLE</option>
-              <option value="BUNDLE">BUNDLE</option>
+              <option value="single">SINGLE</option>
+              <option value="bundle">BUNDLE</option>
             </select>
             <input
               type="text"
