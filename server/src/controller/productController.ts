@@ -4,6 +4,56 @@ import type { Context } from "hono";
 
 const prisma = new PrismaClient();
 
+
+// =======================
+// Tambah produk baru
+// =======================
+export const createProduct = async (c: Context): Promise<Response> => {
+  try {
+    const user = c.get("user");
+    if (!user || user.role !== "instructor") {
+      return c.json({ success: false, message: "Unauthorized. Only instructors can create products." }, 401);
+    }
+
+    const body = await c.req.json();
+
+    const { title, overview, cover, product_type, price } = body;
+
+    if (!title || !product_type || price === undefined) {
+      return c.json(
+        { success: false, message: "Field title, product_type, dan price wajib diisi." },
+        400
+      );
+    }
+
+    const newProduct = await prisma.product.create({
+      data: {
+        title,
+        overview,
+        cover,
+        product_type,
+        price: parseFloat(price),
+      },
+      select: {
+        id: true,
+        title: true,
+        overview: true,
+        cover: true,
+        product_type: true,
+        price: true,
+      },
+    });
+
+    return c.json({ success: true, data: newProduct }, 201);
+  } catch (error: any) {
+    console.error("❌ Error createProduct:", error);
+    return c.json(
+      { success: false, message: "Gagal membuat produk", error: error.message },
+      500
+    );
+  }
+};
+
 // =======================
 // Ambil semua produk
 // =======================
