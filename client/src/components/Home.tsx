@@ -7,7 +7,7 @@ import { Link, useNavigate } from "react-router-dom";
 
 interface AppProps {
   onLogout: () => void;
-},
+}
 
 interface User {
   id: string;
@@ -32,7 +32,7 @@ interface Product {
   title: string;
   overview: string;
   cover: string;
-  ,product_type: string;
+  product_type: string;
   price: number;
   course_id: string | null;
 }
