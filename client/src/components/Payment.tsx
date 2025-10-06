@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Sidebar from "./pages/Sidebar";
 import Navbar from "./pages/Navbar";
+import "../styles/payment.css";
 
 export default function Payment() {
   const { orderId } = useParams<{ orderId: string }>();
@@ -75,15 +76,14 @@ export default function Payment() {
       <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
         <Navbar />
         <main style={{ padding: "20px", flex: 1 }}>
-          <h2 style={titleStyle}>💳 Payment</h2>
+          <h2>💳 Payment</h2>
           <p>Order ID: <strong>{orderId}</strong></p>
 
-          <form onSubmit={handleSubmit} style={formStyle}>
-            <label style={labelStyle}>Metode Pembayaran:</label>
+          <form onSubmit={handleSubmit}>
+            <label>Metode Pembayaran:</label>
             <select
               value={method}
               onChange={(e) => setMethod(e.target.value)}
-              style={inputStyle}
               required
             >
               <option value="cod">Cash on Delivery (COD)</option>
@@ -91,16 +91,15 @@ export default function Payment() {
               <option value="ewallet">E-Wallet</option>
             </select>
 
-            <label style={labelStyle}>Reference Number:</label>
+            <label>Reference Number:</label>
             <input
               type="text"
               value={referenceNumber}
               onChange={(e) => setReferenceNumber(e.target.value)}
-              style={inputStyle}
               required
             />
 
-            <button type="submit" style={buttonStyle} disabled={loading}>
+            <button type="submit" disabled={loading}>
               {loading ? "Processing..." : "Submit Payment"}
             </button>
           </form>
@@ -138,40 +137,3 @@ export default function Payment() {
     </div>
   );
 }
-
-const titleStyle: React.CSSProperties = {
-  fontSize: "20px",
-  fontWeight: "600",
-  marginBottom: "10px",
-  color: "#111827",
-};
-
-const formStyle: React.CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
-  gap: "12px",
-  maxWidth: "400px",
-};
-
-const labelStyle: React.CSSProperties = {
-  fontSize: "14px",
-  fontWeight: 500,
-};
-
-const inputStyle: React.CSSProperties = {
-  padding: "8px 10px",
-  border: "1px solid #d1d5db",
-  borderRadius: "6px",
-  fontSize: "14px",
-};
-
-const buttonStyle: React.CSSProperties = {
-  padding: "10px 16px",
-  background: "#2563eb",
-  color: "#fff",
-  border: "none",
-  borderRadius: "6px",
-  cursor: "pointer",
-  fontSize: "14px",
-  fontWeight: 500,
-};

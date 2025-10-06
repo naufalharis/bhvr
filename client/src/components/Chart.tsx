@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "./pages/Sidebar";
 import Navbar from "./pages/Navbar";
+import "../styles/chart.css";
 
 interface OrderLine {
   id: string;
@@ -21,7 +22,6 @@ export default function OrderLines() {
   const token = localStorage.getItem("token");
   const navigate = useNavigate();
 
-  // === Fetch Pending Order Lines ===
   const fetchOrderLines = async () => {
     try {
       const res = await fetch("/api/order-lines/pending", {
@@ -59,72 +59,82 @@ export default function OrderLines() {
     fetchOrderLines();
   }, []);
 
+  const getStatusClass = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return 'status-badge status-pending';
+      case 'completed':
+        return 'status-badge status-completed';
+      case 'failed':
+        return 'status-badge status-failed';
+      default:
+        return 'status-badge';
+    }
+  };
+
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#f9fafb" }}>
-      {/* Sidebar */}
+    <div className="order-lines-container">
       <Sidebar />
 
-      {/* Main Content */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-        {/* Navbar */}
+      <div className="order-lines-main">
         <Navbar />
 
-        {/* Content */}
-        <main style={{ padding: "20px", flex: 1 }}>
-          <h2 style={titleStyle}>📦 Order Saya</h2>
+        <main className="order-lines-content">
+          <div className="order-lines-header">
+            <span className="order-lines-icon">📦</span>
+            <h2>Order Saya</h2>
+          </div>
 
           {loading ? (
-            <p style={{ padding: "20px", color: "#555" }}>
-              Loading order lines...
-            </p>
+            <div className="loading-state">
+              <div className="loading-spinner"></div>
+              <p>Loading order lines...</p>
+            </div>
           ) : error ? (
-            <p style={{ padding: "20px", color: "red" }}>{error}</p>
+            <div className="error-state">
+              <p>{error}</p>
+            </div>
           ) : orderLines.length === 0 ? (
-            <p style={{ marginTop: "12px", color: "#666" }}>
-              Kamu belum pernah order course.
-            </p>
+            <div className="empty-state">
+              <p>Kamu belum pernah order course.</p>
+            </div>
           ) : (
-            <div style={{ overflowX: "auto", marginTop: "16px" }}>
-              <table style={tableStyle}>
-                <thead>
-                  <tr>
-                    <th style={thStyle}>Order Line ID</th>
-                    <th style={thStyle}>Order ID</th>
-                    <th style={thStyle}>Course</th>
-                    <th style={thStyle}>Status</th>
-                    <th style={thStyle}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {orderLines.map((line, index) => (
-                    <tr
-                      key={line.id}
-                      style={{
-                        backgroundColor: index % 2 === 0 ? "#fff" : "#f9fafb",
-                      }}
-                    >
-                      <td style={tdStyle}>{line.id}</td>
-                      <td style={tdStyle}>{line.order_id}</td>
-                      <td style={tdStyle}>
-                        {line.course_name || line.course_id || "-"}
-                      </td>
-                      <td style={{ ...tdStyle, ...statusStyle(line.status) }}>
-                        {line.status}
-                      </td>
-                      <td style={tdStyle}>
-                        {line.status === "pending" && (
-                          <button
-                            onClick={() => navigate(`/payment/${line.order_id}`)}
-                            style={buttonStyle}
-                          >
-                            💳 Bayar
-                          </button>
-                        )}
-                      </td>
+            <div className="order-lines-card">
+              <div className="order-lines-table-container" style={{ overflowX: "auto" }}>
+                <table className="order-lines-table">
+                  <thead>
+                    <tr>
+                      <th>Order Line ID</th>
+                      <th>Order ID</th>
+                      <th>Status</th>
+                      <th>Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {orderLines.map((line, index) => (
+                      <tr key={line.id}>
+                        <td>{line.id}</td>
+                        <td>{line.order_id}</td>
+                        <td>
+                          <span className={getStatusClass(line.status)}>
+                            {line.status}
+                          </span>
+                        </td>
+                        <td>
+                          {line.status === "pending" && (
+                            <button
+                              className="payment-button"
+                              onClick={() => navigate(`/payment/${line.order_id}`)}
+                            >
+                              💳 Bayar
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </main>
@@ -132,71 +142,3 @@ export default function OrderLines() {
     </div>
   );
 }
-
-// 🔹 Styles
-const titleStyle: React.CSSProperties = {
-  fontSize: "20px",
-  fontWeight: "600",
-  marginBottom: "10px",
-  color: "#111827",
-};
-
-const tableStyle: React.CSSProperties = {
-  width: "100%",
-  borderCollapse: "collapse",
-  borderRadius: "8px",
-  overflow: "hidden",
-  boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
-};
-
-const thStyle: React.CSSProperties = {
-  borderBottom: "2px solid #e5e7eb",
-  padding: "12px",
-  textAlign: "left",
-  background: "#f3f4f6",
-  fontWeight: 600,
-  fontSize: "14px",
-  color: "#374151",
-};
-
-const tdStyle: React.CSSProperties = {
-  borderBottom: "1px solid #e5e7eb",
-  padding: "10px 12px",
-  fontSize: "14px",
-  color: "#111827",
-};
-
-const buttonStyle: React.CSSProperties = {
-  padding: "6px 12px",
-  background: "#2563eb",
-  color: "#fff",
-  border: "none",
-  borderRadius: "6px",
-  cursor: "pointer",
-  fontSize: "14px",
-  fontWeight: 500,
-};
-
-const statusStyle = (status: string): React.CSSProperties => {
-  let bg = "#e5e7eb";
-  let color = "#374151";
-
-  if (status === "pending") {
-    bg = "#fef3c7";
-    color = "#92400e";
-  } else if (status === "completed") {
-    bg = "#d1fae5";
-    color = "#065f46";
-  } else if (status === "failed") {
-    bg = "#fee2e2";
-    color = "#991b1b";
-  }
-
-  return {
-    background: bg,
-    color: color,
-    fontWeight: 500,
-    textAlign: "center",
-    borderRadius: "6px",
-  };
-};

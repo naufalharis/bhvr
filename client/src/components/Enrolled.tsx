@@ -2,6 +2,11 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "./pages/Sidebar";
 import Navbar from "./pages/Navbar";
+import "../styles/enrolled.css";
+
+interface AppProps {
+  onLogout: () => void;
+}
 
 interface EnrolledCourse {
   id: string;
@@ -10,11 +15,27 @@ interface EnrolledCourse {
   order_id: string | null;
   bundle_id: string | null;
   enrolled_date: string;
-  order?: any;
-  course?: any;
+  course?: {
+    id: string;
+    title: string;
+    course_type: string;
+    overview: string;
+    cover: string;
+    slug: string;
+  };
 }
 
-export default function EnrolledCoursePage() {
+interface User {
+  id: string;
+  first_name: string;
+  last_name?: string;
+  email: string;
+  username: string;
+  role: string;
+}
+
+export default function EnrolledCoursePage({ onLogout }: AppProps) {
+  const [user, setUser] = useState<User | null>(null);
   const [enrolled, setEnrolled] = useState<EnrolledCourse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -22,6 +43,7 @@ export default function EnrolledCoursePage() {
   const token = localStorage.getItem("token");
   const navigate = useNavigate();
 
+  /** Fetch data enrolled dari backend */
   const fetchEnrolled = async () => {
     try {
       const res = await fetch("/api/enrolled", {
@@ -30,136 +52,156 @@ export default function EnrolledCoursePage() {
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Gagal fetch enrolled courses");
+        throw new Error(err.error || "Gagal memuat enrolled courses");
       }
 
       const data = await res.json();
       setEnrolled(data.enrolled || []);
     } catch (err: any) {
       console.error("Error:", err);
-      setError(err.message || "Terjadi error saat fetch enrolled courses");
+      setError(err.message || "Terjadi kesalahan saat memuat data");
     } finally {
       setLoading(false);
     }
   };
 
+  /** Ambil user dari localStorage */
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (err) {
+        console.error("Failed to parse stored user:", err);
+      }
+    }
+  }, []);
+
   useEffect(() => {
     fetchEnrolled();
   }, []);
+
+  /** Navigasi ke halaman chapter */
+  const handleViewCourse = (slug: string) => {
+    navigate(`/chapter/${slug}`);
+  };
+
+  /** Pisahkan berdasarkan course_type */
+  const singleCourses = enrolled.filter(
+    (item) => item.course?.course_type === "single"
+  );
+  const bundleCourses = enrolled.filter(
+    (item) => item.course?.course_type === "bundle"
+  );
 
   return (
     <div style={{ display: "flex", minHeight: "100vh", background: "#f9fafb" }}>
       {/* Sidebar */}
       <Sidebar />
 
-      {/* Main Content */}
+      {/* Main Section */}
       <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-        {/* Navbar */}
-        <Navbar />
+        <Navbar
+          userName={user ? user.first_name : "Loading..."}
+          onLogout={onLogout}
+        />
 
-        {/* Content */}
-        <main style={{ padding: "20px", flex: 1 }}>
-          <h2 style={titleStyle}>📚 Enrolled Courses</h2>
+        <main className="enrolled-container">
+          <h2>📚 My Enrolled Courses</h2>
 
           {loading ? (
-            <p style={{ padding: "20px", color: "#555" }}>
-              Loading enrolled courses...
-            </p>
+            <p className="status-text">Loading enrolled courses...</p>
           ) : error ? (
-            <p style={{ padding: "20px", color: "red" }}>{error}</p>
+            <p className="error-text">{error}</p>
           ) : enrolled.length === 0 ? (
-            <p style={{ marginTop: "12px", color: "#666" }}>
-              Belum ada course yang di-enroll.
-            </p>
+            <p className="status-text">Belum ada course yang di-enroll.</p>
           ) : (
-            <div style={cardGrid}>
-              {enrolled.map((item) => (
-                <div key={item.id} style={cardStyle}>
-                  <h3 style={courseTitle}>
-                    {item.course?.title || "Untitled Course"}
-                  </h3>
-                  <p style={courseMeta}>
-                    <strong>Enrolled Date:</strong>{" "}
-                    {new Date(item.enrolled_date).toLocaleDateString()}
-                  </p>
-                  <p style={courseMeta}>
-                    <strong>Order ID:</strong> {item.order_id || "-"}
-                  </p>
-                  <p style={courseMeta}>
-                    <strong>Course ID:</strong> {item.course_id || "-"}
-                  </p>
-                  <p style={courseMeta}>
-                    <strong>Bundle ID:</strong> {item.bundle_id || "-"}
-                  </p>
-                  <div style={footerCard}>
-                    {item.course_id && (
-                      <button
-                        onClick={() => navigate(`/courses/${item.course_id}`)}
-                        style={btnStyle}
+            <>
+              {/* Bagian Single Courses */}
+              {singleCourses.length > 0 && (
+                <section className="section-block">
+                  <h3 className="section-title">🧩 Single Courses</h3>
+                  <div className="enrolled-grid">
+                    {singleCourses.map((item) => (
+                      <div
+                        key={item.id}
+                        className="enrolled-card"
+                        onClick={() =>
+                          item.course?.slug && handleViewCourse(item.course.slug)
+                        }
                       >
-                        Lihat Course
-                      </button>
-                    )}
+                        <img
+                          src={item.course?.cover || "/placeholder.jpg"}
+                          alt={item.course?.title}
+                          className="enrolled-cover"
+                        />
+                        <div className="enrolled-content">
+                          <h3>{item.course?.title || "Untitled Course"}</h3>
+                          <p className="course-type">
+                            {item.course?.course_type}
+                          </p>
+                          <p className="overview">
+                            {item.course?.overview?.slice(0, 100) ||
+                              "Tidak ada deskripsi..."}
+                            ...
+                          </p>
+                          <p className="enrolled-date">
+                            Enrolled on:{" "}
+                            {new Date(
+                              item.enrolled_date
+                            ).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                </div>
-              ))}
-            </div>
+                </section>
+              )}
+
+              {/* Bagian Bundle Courses */}
+              {bundleCourses.length > 0 && (
+                <section className="section-block">
+                  <h3 className="section-title">📦 Bundle Courses</h3>
+                  <div className="enrolled-grid">
+                    {bundleCourses.map((item) => (
+                      <div
+                        key={item.id}
+                        className="enrolled-card"
+                        onClick={() =>
+                          item.course?.slug && handleViewCourse(item.course.slug)
+                        }
+                      >
+                        <img
+                          src={item.course?.cover || "/placeholder.jpg"}
+                          alt={item.course?.title}
+                          className="enrolled-cover"
+                        />
+                        <div className="enrolled-content">
+                          <h3>{item.course?.title || "Untitled Bundle"}</h3>
+                          <p className="course-type">
+                            {item.course?.course_type}
+                          </p>
+                          <p className="overview">
+                            {item.course?.overview?.slice(0, 100) ||
+                              "Tidak ada deskripsi..."}
+                            ...
+                          </p>
+                          <p className="enrolled-date">
+                            Enrolled on:{" "}
+                            {new Date(
+                              item.enrolled_date
+                            ).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+            </>
           )}
         </main>
       </div>
     </div>
   );
 }
-
-// Styles
-const titleStyle: React.CSSProperties = {
-  fontSize: "20px",
-  fontWeight: "600",
-  marginBottom: "16px",
-  color: "#111827",
-};
-
-const cardGrid: React.CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-  gap: "20px",
-};
-
-const cardStyle: React.CSSProperties = {
-  background: "#fff",
-  padding: "16px",
-  borderRadius: "12px",
-  boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-  display: "flex",
-  flexDirection: "column",
-  justifyContent: "space-between",
-};
-
-const courseTitle: React.CSSProperties = {
-  fontSize: "16px",
-  fontWeight: "600",
-  color: "#1f2937",
-  marginBottom: "8px",
-};
-
-const courseMeta: React.CSSProperties = {
-  fontSize: "14px",
-  color: "#4b5563",
-  margin: "4px 0",
-};
-
-const footerCard: React.CSSProperties = {
-  marginTop: "12px",
-  display: "flex",
-  justifyContent: "flex-end",
-};
-
-const btnStyle: React.CSSProperties = {
-  padding: "8px 12px",
-  background: "#2563eb",
-  color: "#fff",
-  fontSize: "14px",
-  border: "none",
-  borderRadius: "8px",
-  cursor: "pointer",
-};
