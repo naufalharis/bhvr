@@ -4,19 +4,20 @@ import type { Context } from "hono";
 
 const prisma = new PrismaClient();
 
-
 // =======================
-// Tambah produk baru
+// Tambah produk baru (khusus instructor)
 // =======================
 export const createProduct = async (c: Context): Promise<Response> => {
   try {
     const user = c.get("user");
     if (!user || user.role !== "instructor") {
-      return c.json({ success: false, message: "Unauthorized. Only instructors can create products." }, 401);
+      return c.json(
+        { success: false, message: "Unauthorized. Only instructors can create products." },
+        401
+      );
     }
 
     const body = await c.req.json();
-
     const { title, overview, cover, product_type, price } = body;
 
     if (!title || !product_type || price === undefined) {
@@ -55,13 +56,13 @@ export const createProduct = async (c: Context): Promise<Response> => {
 };
 
 // =======================
-// Ambil semua produk
+// Ambil semua produk (bisa student & instructor)
 // =======================
 export const getAllProducts = async (c: Context): Promise<Response> => {
   try {
     const user = c.get("user");
-    if (!user || user.role !== "instructor") {
-      return c.json({ success: false, message: "Unauthorized. Only Instructor can access products." }, 401);
+    if (!user || !["instructor", "student"].includes(user.role)) {
+      return c.json({ success: false, message: "Unauthorized. Only instructors or students can access products." }, 401);
     }
 
     const products = await prisma.product.findMany({
@@ -86,13 +87,13 @@ export const getAllProducts = async (c: Context): Promise<Response> => {
 };
 
 // =======================
-// Ambil produk berdasarkan ID
+// Ambil produk berdasarkan ID (bisa student & instructor)
 // =======================
 export const getProductById = async (c: Context): Promise<Response> => {
   try {
     const user = c.get("user");
-    if (!user || user.role !== "instructor") {
-      return c.json({ success: false, message: "Unauthorized. Only Instructor can access products." }, 401);
+    if (!user || !["instructor", "student"].includes(user.role)) {
+      return c.json({ success: false, message: "Unauthorized. Only instructors or students can access products." }, 401);
     }
 
     const id = c.req.param("id");
@@ -124,13 +125,13 @@ export const getProductById = async (c: Context): Promise<Response> => {
 };
 
 // =======================
-// Ambil semua product_type unik
+// Ambil semua product_type unik (bisa student & instructor)
 // =======================
 export const getProductTypes = async (c: Context): Promise<Response> => {
   try {
     const user = c.get("user");
-    if (!user || user.role !== "instructor") {
-      return c.json({ success: false, message: "Unauthorized. Only Instructor can access product types." }, 401);
+    if (!user || !["instructor", "student"].includes(user.role)) {
+      return c.json({ success: false, message: "Unauthorized. Only instructors or students can access product types." }, 401);
     }
 
     const types = await prisma.product.findMany({
@@ -149,4 +150,3 @@ export const getProductTypes = async (c: Context): Promise<Response> => {
     );
   }
 };
-
