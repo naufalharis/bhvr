@@ -201,6 +201,7 @@ export default function ProductDetailPage({ onLogout }: AppProps) {
           body: JSON.stringify({
             productId: selectedProduct,
             courseId: courseId,
+            price: selectedProductData?.price ?? 0,
           }),
         });
 
