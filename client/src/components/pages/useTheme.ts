@@ -1,31 +1,32 @@
-import { useEffect, useState } from "react";
+// src/pages/useTheme.ts
+import { useState, useEffect } from "react";
 
 export type Theme = "light" | "dark" | "system";
 
-export default function useTheme(initial: Theme = "system") {
-  const [theme, setTheme] = useState<Theme>(initial);
+export default function useTheme(defaultTheme: Theme = "system") {
+  const [theme, setTheme] = useState<Theme>(defaultTheme);
 
   useEffect(() => {
-    const root = document.documentElement;
+    // Apply theme when component mounts or theme changes
+    const root = window.document.documentElement;
+    
+    // Remove previous theme classes
+    root.classList.remove("light", "dark");
+    
+    // Determine which theme to apply
+    let effectiveTheme: "light" | "dark" = theme === "system" 
+      ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+      : theme;
 
-    const applyTheme = (mode: Theme) => {
-      if (mode === "system") {
-        const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-        root.setAttribute("data-theme", prefersDark ? "dark" : "light");
-      } else {
-        root.setAttribute("data-theme", mode);
-      }
-    };
-
-    applyTheme(theme);
-
+    // Apply the effective theme
+    root.classList.add(effectiveTheme);
+    root.setAttribute("data-theme", effectiveTheme);
+    
+    // Also set data-theme attribute for system preference
     if (theme === "system") {
-      const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-      const handler = (e: MediaQueryListEvent) =>
-        root.setAttribute("data-theme", e.matches ? "dark" : "light");
-      mediaQuery.addEventListener("change", handler);
-      return () => mediaQuery.removeEventListener("change", handler);
+      root.setAttribute("data-theme", "system");
     }
+
   }, [theme]);
 
   return { theme, setTheme };

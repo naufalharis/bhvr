@@ -10,7 +10,7 @@ import {
   useParams,
 } from "react-router-dom";
 
-import Login from "./components/login";
+import Login from "./components/Login";
 import Home from "./components/Home";
 import Register from "./components/Register";
 import Chapter from "./components/Chapter";
@@ -18,6 +18,9 @@ import ChapterContents from "./components/ChapterContent";
 import Chart from "./components/Chart"; // ✅ import halaman Chart
 import Payment from "./components/Payment"; // ✅ import halaman Payment
 import Enrolled from "./components/Enrolled"; // ✅ import halaman Enrolled
+import ProductPage from "./components/Product"; // ✅ import halaman ProductPage
+import ProductDetail from './components/ProductDetail';// import halaman ProductDetail
+
 
 // ✅ Komponen ProtectedRoute
 function ProtectedRoute({
@@ -91,6 +94,25 @@ function App() {
         }
       />
 
+      {/* Product Page */}
+      <Route
+        path="/products"
+        element={
+          <ProtectedRoute isLoggedIn={isLoggedIn}>
+            <ProductPage onLogout={handleLogout} />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/product-details"
+        element={
+          <ProtectedRoute isLoggedIn={isLoggedIn}>
+            <ProductDetail onLogout={handleLogout} />
+          </ProtectedRoute>
+        }
+      />
+
       {/* Chapter */}
       <Route
         path="/chapter/:id"
@@ -113,10 +135,10 @@ function App() {
 
       {/* Chart */}
       <Route
-        path="/chart"
+        path="/chart/:orderId?"
         element={
           <ProtectedRoute isLoggedIn={isLoggedIn}>
-            <Chart />
+            <ChartWrapper />
           </ProtectedRoute>
         }
       />
@@ -168,6 +190,12 @@ function PaymentWrapper() {
   const { orderId } = useParams<{ orderId: string }>();
   if (!orderId) return <div>Order ID is missing</div>;
   return <Payment orderId={orderId} />;
+}
+
+// ✅ Wrapper Chart agar bisa ambil orderId dari param (optional)
+function ChartWrapper() {
+  const { orderId } = useParams<{ orderId?: string }>();
+  return <Chart orderId={orderId} />;
 }
 
 ReactDOM.createRoot(document.getElementById("root")!).render(

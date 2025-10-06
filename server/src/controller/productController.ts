@@ -60,8 +60,8 @@ export const createProduct = async (c: Context): Promise<Response> => {
 export const getAllProducts = async (c: Context): Promise<Response> => {
   try {
     const user = c.get("user");
-    if (!user || user.role !== "student") {
-      return c.json({ success: false, message: "Unauthorized. Only students can access products." }, 401);
+    if (!user || user.role !== "instructor") {
+      return c.json({ success: false, message: "Unauthorized. Only Instructor can access products." }, 401);
     }
 
     const products = await prisma.product.findMany({
@@ -91,8 +91,8 @@ export const getAllProducts = async (c: Context): Promise<Response> => {
 export const getProductById = async (c: Context): Promise<Response> => {
   try {
     const user = c.get("user");
-    if (!user || user.role !== "student") {
-      return c.json({ success: false, message: "Unauthorized. Only students can access products." }, 401);
+    if (!user || user.role !== "instructor") {
+      return c.json({ success: false, message: "Unauthorized. Only Instructor can access products." }, 401);
     }
 
     const id = c.req.param("id");
@@ -129,8 +129,8 @@ export const getProductById = async (c: Context): Promise<Response> => {
 export const getProductTypes = async (c: Context): Promise<Response> => {
   try {
     const user = c.get("user");
-    if (!user || user.role !== "student") {
-      return c.json({ success: false, message: "Unauthorized. Only students can access product types." }, 401);
+    if (!user || user.role !== "instructor") {
+      return c.json({ success: false, message: "Unauthorized. Only Instructor can access product types." }, 401);
     }
 
     const types = await prisma.product.findMany({
@@ -149,3 +149,4 @@ export const getProductTypes = async (c: Context): Promise<Response> => {
     );
   }
 };
+

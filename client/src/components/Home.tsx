@@ -37,15 +37,6 @@ interface Product {
   course_id: string | null;
 }
 
-interface ProductDetail {
-  id: string;
-  course_id: string;
-  product_id: string;
-  price: number;
-  course: Course;
-  product: Product;
-}
-
 interface Order {
   id: string;
   status: string;
@@ -68,7 +59,6 @@ export default function Home({ onLogout }: AppProps) {
   const [orderLines, setOrderLines] = useState<OrderLine[]>([]);
   const [showOrderModal, setShowOrderModal] = useState(false);
   const [showCourseModal, setShowCourseModal] = useState(false);
-  const [showProductModal, setShowProductModal] = useState(false);
   const [showAccessDeniedModal, setShowAccessDeniedModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
@@ -76,8 +66,6 @@ export default function Home({ onLogout }: AppProps) {
   const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
   const [orderDate, setOrderDate] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [newCourseId, setNewCourseId] = useState<string | null>(null);
-  const [newCourseData, setNewCourseData] = useState<Course | null>(null);
   const [clickedCourseSlug, setClickedCourseSlug] = useState<string | null>(null);
 
   const token = localStorage.getItem("token");
@@ -90,15 +78,6 @@ export default function Home({ onLogout }: AppProps) {
     coverPreview: "",
     course_type: "",
     slug: "",
-  });
-
-  const [productForm, setProductForm] = useState({
-    title: "",
-    overview: "",
-    cover: null as File | null,
-    coverPreview: "",
-    product_type: "",
-    price: "",
   });
 
   /** Ambil user dari localStorage */
@@ -399,21 +378,7 @@ export default function Home({ onLogout }: AppProps) {
     setEditingCourse(null);
   };
 
-  /** Reset product form */
-  const resetProductForm = () => {
-    setProductForm({
-      title: "",
-      overview: "",
-      cover: null,
-      coverPreview: "",
-      product_type: "",
-      price: "",
-    });
-    setNewCourseId(null);
-    setNewCourseData(null);
-  };
-
-  /** Submit create course → lanjut buka modal product */
+  /** Submit create course */
   const handleCreateCourse = async () => {
     if (!token || !user) return;
     if (!courseForm.title || !courseForm.slug) {
@@ -466,15 +431,6 @@ export default function Home({ onLogout }: AppProps) {
       
       // Handle different response formats
       const createdCourse = responseData.course || responseData.data || responseData;
-      const createdId = createdCourse.id;
-
-      if (!createdId) {
-        throw new Error("Course ID tidak ditemukan dalam response");
-      }
-
-      console.log("✅ Course created with ID:", createdId);
-      setNewCourseId(createdId);
-      setNewCourseData(createdCourse);
 
       alert(`✅ Course berhasil ${editingCourse ? "diperbarui" : "dibuat"}!`);
 
@@ -483,108 +439,9 @@ export default function Home({ onLogout }: AppProps) {
       setShowCourseModal(false);
       fetchCourses();
 
-      // Jika membuat course baru (bukan edit), buka modal product
-      if (!editingCourse) {
-        setTimeout(() => {
-          setShowProductModal(true);
-        }, 100); // Small delay to ensure state is updated
-      }
     } catch (err: any) {
       console.error("❌ Error membuat course:", err);
       alert(`Error membuat course: ${err.message}`);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  /** Submit product lalu otomatis buat product detail */
-  const handleCreateProduct = async () => {
-    if (!token || !user) return;
-    if (!productForm.title || !productForm.product_type || !productForm.price) {
-      alert("Semua field wajib diisi!");
-      return;
-    }
-
-    if (!newCourseId) {
-      alert("Error: Course ID tidak ditemukan. Silakan buat course terlebih dahulu.");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      let coverBase64 = "";
-      if (productForm.cover) {
-        coverBase64 = await uploadCover(productForm.cover);
-      }
-
-      // 1. Buat product
-      const productRes = await fetch("/api/product", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          title: productForm.title,
-          overview: productForm.overview,
-          cover: coverBase64 || "/placeholder.png",
-          product_type: productForm.product_type,
-          price: parseFloat(productForm.price),
-        }),
-      });
-
-      if (!productRes.ok) {
-        const errorText = await productRes.text();
-        throw new Error(errorText || "Gagal membuat product");
-      }
-
-      const productData = await productRes.json();
-      const productId = productData.data?.id || productData.id;
-
-      if (!productId) {
-        throw new Error("Product ID tidak ditemukan dalam response");
-      }
-
-      console.log("✅ Product created with ID:", productId);
-
-      // 2. Buat product detail (relasi ke course)
-      const detailRes = await fetch("/api/product-details", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          courseId: newCourseId,
-          productId: productId,
-          price: parseFloat(productForm.price),
-        }),
-      });
-
-      if (!detailRes.ok) {
-        const errorText = await detailRes.text();
-        console.error("Product Detail Error Response:", errorText);
-        
-        // Even if product detail fails, we still have the product
-        // We can try to handle this gracefully
-        if (errorText.includes("course_id") || errorText.includes("course")) {
-          console.warn("Product created but product detail failed. Course might not exist.");
-        }
-        throw new Error(`Gagal membuat product detail: ${errorText}`);
-      }
-
-      const detailData = await detailRes.json();
-      console.log("✅ Product Detail created:", detailData);
-
-      alert("✅ Product & Product Detail berhasil dibuat!");
-      
-      // Reset semua state dan tutup modal
-      resetProductForm();
-      setShowProductModal(false);
-      fetchProducts();
-    } catch (err: any) {
-      console.error("❌ Error creating product:", err);
-      alert(`Error: ${err.message}`);
     } finally {
       setLoading(false);
     }
@@ -622,12 +479,6 @@ export default function Home({ onLogout }: AppProps) {
       slug: course.slug,
     });
     setShowCourseModal(true);
-  };
-
-  /** Handle cancel product modal */
-  const handleCancelProductModal = () => {
-    setShowProductModal(false);
-    resetProductForm();
   };
 
   /** Handle cancel course modal */
@@ -991,122 +842,8 @@ export default function Home({ onLogout }: AppProps) {
                   ? "Processing..." 
                   : editingCourse 
                     ? "✅ Update Course" 
-                    : "✅ Create Course & Add Product"
+                    : "✅ Create Course"
                 }
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal Create Product */}
-      {showProductModal && user?.role === "instructor" && (
-        <div className="modal-overlay">
-          <div className="modal">
-            <h2 className="modal-title">Buat Product untuk Course</h2>
-            
-            {newCourseData && (
-              <div className="success-message">
-                <p className="success-text">
-                  <strong>Course Berhasil Dibuat:</strong> {newCourseData.title}
-                </p>
-              </div>
-            )}
-            
-            <input
-              type="text"
-              placeholder="Judul Product"
-              value={productForm.title}
-              onChange={(e) =>
-                setProductForm({ ...productForm, title: e.target.value })
-              }
-              className="modal-input"
-            />
-            <textarea
-              placeholder="Overview"
-              value={productForm.overview}
-              onChange={(e) =>
-                setProductForm({ ...productForm, overview: e.target.value })
-              }
-              className="modal-textarea"
-              rows={3}
-            />
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => {
-                const file = e.target.files ? e.target.files[0] : null;
-                if (file) {
-                  setProductForm({
-                    ...productForm,
-                    cover: file,
-                    coverPreview: URL.createObjectURL(file),
-                  });
-                }
-              }}
-              className="modal-input"
-            />
-            {productForm.coverPreview && (
-              <img
-                src={productForm.coverPreview}
-                alt="Product Cover Preview"
-                className="cover-preview"
-              />
-            )}
-            <select
-              value={productForm.product_type}
-              onChange={(e) =>
-                setProductForm({
-                  ...productForm,
-                  product_type: e.target.value,
-                })
-              }
-              className="modal-input"
-            >
-              <option value="">-- Pilih Product Type --</option>
-              <option value="bundle">Bundle</option>
-              <option value="course">Course</option>
-              <option value="merchandise">Merchandise</option>
-            </select>
-            <input
-              type="number"
-              placeholder="Harga"
-              value={productForm.price}
-              onChange={(e) =>
-                setProductForm({ ...productForm, price: e.target.value })
-              }
-              className="modal-input"
-            />
-            
-            <div className="info-message">
-              <p className="info-text">
-                <strong>Info:</strong> Product ini akan dikaitkan dengan course yang baru dibuat.
-                <br />
-                <strong>Course ID:</strong> <code>{newCourseId}</code>
-                {newCourseData && (
-                  <>
-                    <br />
-                    <strong>Course Title:</strong> {newCourseData.title}
-                  </>
-                )}
-              </p>
-            </div>
-
-            <div className="modal-actions">
-              <button
-                type="button"
-                className="cancel-btn"
-                onClick={handleCancelProductModal}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="submit-btn"
-                onClick={handleCreateProduct}
-                disabled={loading}
-              >
-                {loading ? "Processing..." : "✅ Submit Product"}
               </button>
             </div>
           </div>
