@@ -25,7 +25,6 @@ interface Product {
   cover: string;
   product_type: string;
   price: number;
-  instructor_id?: string; // Add instructor_id to track product ownership
 }
 
 export default function ProductPage({ onLogout }: AppProps) {
@@ -62,22 +61,13 @@ export default function ProductPage({ onLogout }: AppProps) {
     }
   }, []);
 
-  /** Fetch products based on user role */
+  /** Fetch products */
   const fetchProducts = async () => {
-    if (!token || !user) return;
-    
+    if (!token) return;
     try {
-      let url = "/api/product";
-      
-      // If user is instructor, fetch only their products
-      if (user.role === "instructor") {
-        url = `/api/product?instructor_id=${user.id}`;
-      }
-      
-      const res = await fetch(url, {
+      const res = await fetch("/api/product", {
         headers: { Authorization: `Bearer ${token}` },
       });
-      
       if (!res.ok) {
         if (res.status === 401) {
           console.log("User not authorized to access products");
@@ -85,7 +75,6 @@ export default function ProductPage({ onLogout }: AppProps) {
         }
         throw new Error(`Failed to fetch products: ${res.status}`);
       }
-      
       const data = await res.json();
       setProducts(Array.isArray(data.data) ? data.data : []);
     } catch (error) {
@@ -111,11 +100,11 @@ export default function ProductPage({ onLogout }: AppProps) {
   };
 
   useEffect(() => {
-    if (token && user) {
+    if (token) {
       fetchProducts();
       fetchProductTypes();
     }
-  }, [token, user]);
+  }, [token]);
 
   /** Upload cover to base64 */
   const uploadCover = async (file: File): Promise<string> => {
@@ -146,23 +135,11 @@ export default function ProductPage({ onLogout }: AppProps) {
     setEditingProduct(null);
   };
 
-  /** Check if user owns the product (for instructors) */
-  const userOwnsProduct = (product: Product): boolean => {
-    if (!user || user.role !== "instructor") return false;
-    return product.instructor_id === user.id;
-  };
-
   /** Create or update product */
   const handleCreateProduct = async () => {
     if (!token || !user) return;
     if (!productForm.title || !productForm.product_type || !productForm.price) {
       alert("Title, Product Type, dan Price wajib diisi!");
-      return;
-    }
-
-    // For instructors editing, check ownership
-    if (editingProduct && user.role === "instructor" && !userOwnsProduct(editingProduct)) {
-      alert("You are not authorized to edit this product");
       return;
     }
 
@@ -181,18 +158,10 @@ export default function ProductPage({ onLogout }: AppProps) {
         cover: coverBase64 || "/placeholder.png",
         product_type: productForm.product_type,
         price: parseFloat(productForm.price),
-        // Automatically set instructor_id for new products created by instructors
-        ...(user.role === "instructor" && !editingProduct && { instructor_id: user.id })
       };
 
-      let url = "/api/product";
-      let method = "POST";
-
-      // If editing, use PUT method and include product ID
-      if (editingProduct) {
-        url = `/api/product/${editingProduct.id}`;
-        method = "PUT";
-      }
+      const url = "/api/product";
+      const method = "POST";
 
       const res = await fetch(url, {
         method,
@@ -205,9 +174,11 @@ export default function ProductPage({ onLogout }: AppProps) {
 
       if (!res.ok) {
         const errorText = await res.text();
-        throw new Error(errorText || `Gagal ${editingProduct ? "mengupdate" : "membuat"} product`);
+        throw new Error(errorText || "Gagal membuat product");
       }
 
+      const productData = await res.json();
+      
       alert(`✅ Product berhasil ${editingProduct ? "diperbarui" : "dibuat"}!`);
 
       // Reset form dan tutup modal
@@ -226,32 +197,15 @@ export default function ProductPage({ onLogout }: AppProps) {
   /** Delete product */
   const handleDeleteProduct = async (productId: string) => {
     if (!window.confirm("Apakah yakin ingin menghapus product ini?")) return;
-    if (!token || !user) return;
-    
-    // Find the product to check ownership
-    const productToDelete = products.find(p => p.id === productId);
-    if (!productToDelete) return;
-    
-    // For instructors, check if they own the product
-    if (user.role === "instructor" && !userOwnsProduct(productToDelete)) {
-      alert("You are not authorized to delete this product");
-      return;
-    }
-
+    if (!token) return;
     setLoading(true);
     try {
+      // Note: You might need to add a DELETE endpoint in your backend
       const res = await fetch(`/api/product/${productId}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
-      
-      if (!res.ok) {
-        if (res.status === 403) {
-          throw new Error("You are not authorized to delete this product");
-        }
-        throw new Error("Gagal menghapus product");
-      }
-      
+      if (!res.ok) throw new Error("Gagal menghapus product");
       alert("✅ Product berhasil dihapus!");
       fetchProducts();
     } catch (err: any) {
@@ -263,12 +217,6 @@ export default function ProductPage({ onLogout }: AppProps) {
 
   /** Edit product */
   const handleEditProduct = (product: Product) => {
-    // For instructors, check if they own the product before allowing edit
-    if (user?.role === "instructor" && !userOwnsProduct(product)) {
-      alert("You are not authorized to edit this product");
-      return;
-    }
-    
     setEditingProduct(product);
     setProductForm({
       title: product.title,
@@ -294,14 +242,6 @@ export default function ProductPage({ onLogout }: AppProps) {
     const matchesType = selectedType === "" || product.product_type === selectedType;
     return matchesSearch && matchesType;
   });
-
-  // Get products count for display
-  const getProductsCountText = () => {
-    if (user?.role === "instructor") {
-      return `Showing ${filteredProducts.length} of your product(s)`;
-    }
-    return `Found ${filteredProducts.length} product(s)`;
-  };
 
   return (
     <div className="app">
@@ -366,7 +306,7 @@ export default function ProductPage({ onLogout }: AppProps) {
 
             {searchQuery && (
               <div className="search-results-info">
-                {getProductsCountText()} matching "{searchQuery}"
+                Found {filteredProducts.length} product(s) matching "{searchQuery}"
                 {selectedType && ` in ${selectedType} category`}
               </div>
             )}
@@ -376,9 +316,7 @@ export default function ProductPage({ onLogout }: AppProps) {
         <main className="content">
           <div className="products-section">
             <div className="products-header">
-              <h2>
-                {user?.role === "instructor" ? "My Products" : "Products"}
-              </h2>
+              <h2>Products</h2>
               {user?.role === "instructor" && (
                 <button
                   className="create-product-btn"
@@ -388,20 +326,6 @@ export default function ProductPage({ onLogout }: AppProps) {
                 </button>
               )}
             </div>
-
-            {/* User role info */}
-            {user && (
-              <div className="user-role-info">
-                <span className={`role-badge ${user.role}`}>
-                  {user.role.toUpperCase()}
-                </span>
-                {user.role === "instructor" && (
-                  <span className="role-description">
-                    You can only view and manage your own products
-                  </span>
-                )}
-              </div>
-            )}
 
             <div className="products-grid">
               {filteredProducts.length > 0 ? (
@@ -427,9 +351,7 @@ export default function ProductPage({ onLogout }: AppProps) {
                           Rp{product.price.toLocaleString()}
                         </span>
                       </div>
-                      
-                      {/* Show edit/delete buttons only if user owns the product or is admin */}
-                      {user?.role === "instructor" && userOwnsProduct(product) && (
+                      {user?.role === "instructor" && (
                         <div className="product-actions">
                           <button
                             className="edit-btn"
@@ -453,9 +375,7 @@ export default function ProductPage({ onLogout }: AppProps) {
                   <p className="no-products-text">
                     {searchQuery || selectedType 
                       ? "No products found matching your criteria." 
-                      : user?.role === "instructor" 
-                        ? "You haven't created any products yet." 
-                        : "No products available yet."}
+                      : "No products available yet."}
                   </p>
                   {(searchQuery || selectedType) && (
                     <button
@@ -466,14 +386,6 @@ export default function ProductPage({ onLogout }: AppProps) {
                       className="clear-filters-button"
                     >
                       Clear Filters
-                    </button>
-                  )}
-                  {user?.role === "instructor" && !searchQuery && !selectedType && (
-                    <button
-                      onClick={() => setShowProductModal(true)}
-                      className="create-first-product-button"
-                    >
-                      Create Your First Product
                     </button>
                   )}
                 </div>
