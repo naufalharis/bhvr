@@ -1,8 +1,6 @@
 // src/components/Chapter.tsx
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import Navbar from "./pages/Navbar";
-import Sidebar from "./pages/Sidebar";
 import "../styles/chapter.css";
 
 interface Chapter {
@@ -348,12 +346,7 @@ export default function Chapter() {
 
   return (
     <div className="app">
-      <Sidebar />
       <div className="main">
-        <Navbar
-          userName={user ? user.first_name || user.username : "User"}
-          onLogout={() => (window.location.href = "/login")}
-        />
 
         <main className="chapter-page">
           <div className="chapter-header">

@@ -1,8 +1,6 @@
 // src/components/OrderLines.tsx
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Sidebar from "./pages/Sidebar";
-import Navbar from "./pages/Navbar";
 import "../styles/chart.css";
 
 interface OrderLine {
@@ -74,11 +72,8 @@ export default function OrderLines() {
 
   return (
     <div className="order-lines-container">
-      <Sidebar />
 
       <div className="order-lines-main">
-        <Navbar />
-
         <main className="order-lines-content">
           <div className="order-lines-header">
             <span className="order-lines-icon">📦</span>

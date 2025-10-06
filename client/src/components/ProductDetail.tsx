@@ -1,7 +1,5 @@
 // src/components/ProductDetailPage.tsx
 import React, { useEffect, useState } from "react";
-import Sidebar from "./pages/Sidebar";
-import Navbar from "./pages/Navbar";
 import "../styles/productdetail.css";
 import { useNavigate } from "react-router-dom";
 
@@ -294,12 +292,7 @@ export default function ProductDetailPage({ onLogout }: AppProps) {
   if (user?.role !== "instructor") {
     return (
       <div className="app">
-        <Sidebar />
         <div className="main">
-          <Navbar
-            userName={user ? user.first_name : "Loading..."}
-            onLogout={onLogout}
-          />
           <div className="content">
             <div className="access-denied">
               <h2>Access Denied</h2>
@@ -313,12 +306,7 @@ export default function ProductDetailPage({ onLogout }: AppProps) {
 
   return (
     <div className="app">
-      <Sidebar />
       <div className="main">
-        <Navbar
-          userName={user ? user.first_name : "Loading..."}
-          onLogout={onLogout}
-        />
         
         {/* Search Section */}
         <div className="search-section">

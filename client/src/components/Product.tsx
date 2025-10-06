@@ -1,7 +1,5 @@
 // src/components/ProductPage.tsx
 import React, { useEffect, useState } from "react";
-import Sidebar from "./pages/Sidebar";
-import Navbar from "./pages/Navbar";
 import "../styles/product.css";
 import { useNavigate } from "react-router-dom";
 
@@ -245,12 +243,7 @@ export default function ProductPage({ onLogout }: AppProps) {
 
   return (
     <div className="app">
-      <Sidebar />
       <div className="main">
-        <Navbar
-          userName={user ? user.first_name : "Loading..."}
-          onLogout={onLogout}
-        />
         
         {/* Search and Filter Section */}
         <div className="search-section">

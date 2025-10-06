@@ -1,12 +1,10 @@
 // src/components/Home.tsx
 import React, { useEffect, useState } from "react";
-import Sidebar from "./pages/Sidebar";
-import Navbar from "./pages/Navbar";
 import "../styles/home.css";
 import { Link, useNavigate } from "react-router-dom";
 
 interface AppProps {
-  onLogout: () => void;
+  onLogout?: () => void;
 }
 
 interface User {
@@ -500,12 +498,7 @@ export default function Home({ onLogout }: AppProps) {
 
   return (
     <div className="app">
-      <Sidebar />
       <div className="main">
-        <Navbar
-          userName={user ? user.first_name : "Loading..."}
-          onLogout={onLogout}
-        />
         
         {/* Search Bar Section */}
         <div className="search-section">

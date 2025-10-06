@@ -1,7 +1,5 @@
 // src/components/ChapterContents.tsx
 import React, { useEffect, useState } from "react";
-import Navbar from "./pages/Navbar";
-import Sidebar from "./pages/Sidebar";
 import "../styles/chaptercontent.css";
 
 interface Content {
@@ -152,9 +150,7 @@ export default function ChapterContents({ chapterId }: Props) {
 
   return (
     <div className="app">
-      <Sidebar />
       <div className="main">
-        <Navbar userName={userName} onLogout={() => (window.location.href = "/login")} />
         <main className="chapter-page">
           <div className="chapter-header">
             <h1>Chapter Contents</h1>

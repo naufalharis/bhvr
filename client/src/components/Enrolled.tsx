@@ -1,7 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Sidebar from "./pages/Sidebar";
-import Navbar from "./pages/Navbar";
 import "../styles/enrolled.css";
 
 interface AppProps {
@@ -95,16 +93,10 @@ export default function EnrolledCoursePage({ onLogout }: AppProps) {
   );
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#f9fafb" }}>
-      {/* Sidebar */}
-      <Sidebar />
+    <div style={{ display: "flex", minHeight: "100vh", }}>
 
       {/* Main Section */}
       <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-        <Navbar
-          userName={user ? user.first_name : "Loading..."}
-          onLogout={onLogout}
-        />
 
         <main className="enrolled-container">
           <h2>📚 My Enrolled Courses</h2>
