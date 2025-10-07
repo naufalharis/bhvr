@@ -344,17 +344,31 @@ export default function Chapter() {
     navigate(`/chapter/${chapterId}/contents`);
   };
 
+  // Handle back button click
+  const handleBackClick = () => {
+    navigate(-1); // Navigate to previous page
+  };
+
   return (
     <div className="app">
       <div className="main">
 
         <main className="chapter-page">
           <div className="chapter-header">
-            <h1>
-              Chapters 
-              {course && ` - ${course.title}`}
-              {courseSlug && !course && ` - ${courseSlug}`}
-            </h1>
+            <div className="header-title-container">
+              <button
+                className="back-button"
+                onClick={handleBackClick}
+                title="Go back"
+              >
+                ←
+              </button>
+              <h1>
+                Chapters 
+                {course && ` - ${course.title}`}
+                {courseSlug && !course && ` - ${courseSlug}`}
+              </h1>
+            </div>
             {user?.role === "instructor" && (
               <button
                 className="add-chapter-btn"

@@ -1,6 +1,7 @@
 // src/components/ChapterContents.tsx
 import React, { useEffect, useState } from "react";
 import "../styles/chaptercontent.css";
+import { useNavigate } from "react-router";
 
 interface Content {
   id: string;
@@ -19,6 +20,7 @@ interface Props {
 }
 
 export default function ChapterContents({ chapterId }: Props) {
+  const navigate = useNavigate();
   const [contents, setContents] = useState<Content[]>([]);
   const [form, setForm] = useState<Partial<Content>>({});
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -148,11 +150,23 @@ export default function ChapterContents({ chapterId }: Props) {
     setOpenDropdown((prev) => (prev === type ? null : type));
   };
 
+  // Handle back button click
+  const handleBackClick = () => {
+    navigate(-1); // Navigate to previous page
+  };
+
   return (
     <div className="app">
       <div className="main">
         <main className="chapter-page">
           <div className="chapter-header">
+          <button
+                className="back-button"
+                onClick={handleBackClick}
+                title="Go back"
+              >
+                ←
+              </button>
             <h1>Chapter Contents</h1>
             {userRole === "instructor" && (
               <button

@@ -174,15 +174,23 @@ button {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  width: 70vw;
+  margin-left: calc(-10vw + 10%);
+  margin-right: calc(-10vw + 10%);
 }
 
 .dropdown-section {
   background: var(--card-bg);
-  border-radius: 16px;
+  border-radius: 0;
   border: 1px solid var(--border-color);
+  border-left: none;
+  border-right: none;
   box-shadow: var(--shadow);
   overflow: hidden;
   transition: all 0.3s ease;
+  width: 70vw;
+  margin-left: calc(-10vw + 10%);
+  margin-right: calc(-10vw + 10%);
 }
 
 .dropdown-section:hover {
@@ -489,10 +497,60 @@ button {
   color: var(--text-primary);
 }
 
+/* back button */
+.back-button {
+  position: fixed;              /* tetap di pojok walau halaman discroll */
+  top: 7.5rem;                  /* jarak dari atas */
+  left: 19.5rem;                 /* jarak dari kiri */
+  background: var(--card-bg);   /* warna latar mengikuti tema */
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 50%;           /* bentuk lingkaran */
+  width: 40px;
+  height: 40px;
+  font-size: 1.25rem;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow);
+  transition: all 0.3s ease;
+}
+
+.back-button:hover {
+  background: var(--bg-secondary);
+  box-shadow: var(--shadow-lg);
+  transform: scale(1.05);
+}
+
+.back-button:active {
+  transform: scale(0.95);
+  opacity: 0.8;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
+  /* back button */
+  .back-button {
+    top: 1rem;
+    left: 1rem;
+    width: 36px;
+    height: 36px;
+    font-size: 1.1rem;
+  }
+  
   .chapter-page {
     padding: 1rem;
+  }
+
+  .dropdown-btn {
+    padding: 1rem 1.25rem;
+    font-size: 1rem;
+  }
+
+  .dropdown-content {
+    padding: 1rem 1.25rem;
   }
   
   .chapter-header {
