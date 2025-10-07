@@ -65,7 +65,7 @@ export default function Sidebar() {
                   className={isActive("/enrolled") ? "active" : ""}
                   onClick={() => setActiveMenu("/enrolled")}
                 >
-                  Assignments
+                  Your Courses
                 </Link>
               </li>
               <li>
@@ -74,7 +74,7 @@ export default function Sidebar() {
                   className={isActive("/chart") ? "active" : ""}
                   onClick={() => setActiveMenu("/chart")}
                 >
-                  Keranjang
+                  Cart
                 </Link>
               </li>
             </>

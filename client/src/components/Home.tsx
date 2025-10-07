@@ -546,7 +546,7 @@ export default function Home({ onLogout }: AppProps) {
         <main className="content">
           <div className="courses-section">
             <div className="courses-header">
-              <h2>Your Courses</h2>
+              <h2>Courses</h2>
               {user?.role === "instructor" && (
                 <button
                   className="create-course-btn"

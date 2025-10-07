@@ -1,334 +1,237 @@
 /* enrolled.css */
 
-/* Main Container */
 .enrolled-container {
-    padding: 2rem;
-    max-width: 1200px;
-    margin: 0 auto;
-    width: 100%;
+  max-width: 1200px;
+  padding: 2rem;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.enrolled-container h2 {
+  color: #2c3e50;
+  font-size: 2rem;
+  margin-bottom: 2rem;
+  font-weight: 600;
+  border-bottom: 3px solid #3498db;
+  padding-bottom: 0.5rem;
+  display: inline-block;
+}
+
+/* Section Styles */
+.section-block {
+  margin-bottom: 3rem;
+}
+
+.section-title {
+  color: #34495e;
+  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
+  font-weight: 600;
+  padding-left: 0.5rem;
+  border-left: 4px solid #e74c3c;
+}
+
+/* Grid Layout */
+.enrolled-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+/* Course Card */
+.enrolled-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  overflow: hidden;
+  border: 1px solid #e1e8ed;
+}
+
+.enrolled-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  border-color: #3498db;
+}
+
+.enrolled-cover {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-bottom: 1px solid #e1e8ed;
+}
+
+.enrolled-content {
+  padding: 1.5rem;
+}
+
+.enrolled-content h3 {
+  color: #2c3e50;
+  font-size: 1.2rem;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.course-type {
+  display: inline-block;
+  background: #ecf0f1;
+  color: #7f8c8d;
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  margin-bottom: 1rem;
+  text-transform: capitalize;
+}
+
+.overview {
+  color: #5d6d7e;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin-bottom: 1rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.enrolled-date {
+  color: #7f8c8d;
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px solid #ecf0f1;
+}
+
+/* Status Messages */
+.status-text {
+  text-align: center;
+  color: #7f8c8d;
+  font-size: 1.1rem;
+  margin: 3rem 0;
+  padding: 2rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #3498db;
+}
+
+.error-text {
+  text-align: center;
+  color: #e74c3c;
+  font-size: 1.1rem;
+  margin: 3rem 0;
+  padding: 2rem;
+  background: #fdeded;
+  border-radius: 8px;
+  border-left: 4px solid #e74c3c;
+}
+
+/* Empty State */
+.enrolled-container .status-text {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-size: 1.2rem;
+  padding: 3rem;
+  border-radius: 12px;
+  margin: 2rem 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .enrolled-container {
+    padding: 1rem;
   }
-  
-  /* Page Title */
+
   .enrolled-container h2 {
-    color: #0369a1;
-    font-size: 2rem;
-    font-weight: 700;
-    margin-bottom: 2rem;
-    text-align: center;
-  }
-  
-  /* Section Blocks */
-  .section-block {
-    margin-bottom: 3rem;
-    border-radius: 16px;
-    padding: 2rem;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  }
-  
-  .section-title {
-    color: #0369a1;
     font-size: 1.5rem;
-    font-weight: 600;
     margin-bottom: 1.5rem;
-    padding-bottom: 0.75rem;
-    border-bottom: 2px solid #0369a1;
   }
-  
-  /* Grid Layout */
+
   .enrolled-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-    gap: 1.5rem;
-    margin-top: 1rem;
+    grid-template-columns: 1fr;
+    gap: 1rem;
   }
-  
-  /* Course Cards */
-  .enrolled-card {
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    border: 1px solid #0369a1;
-    transition: all 0.3s ease;
-    cursor: pointer;
-    display: flex;
-    flex-direction: column;
-    height: 100%;
+
+  .section-title {
+    font-size: 1.3rem;
   }
-  
-  .enrolled-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 25px rgba(2, 132, 199, 0.15);
-    border-color: #7dd3fc;
-  }
-  
-  /* Course Cover Image */
-  .enrolled-cover {
-    width: 100%;
-    height: 200px;
-    object-fit: cover;
-    border-bottom: 3px solid #0369a1;
-  }
-  
-  /* Card Content */
+
   .enrolled-content {
-    padding: 1.5rem;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
+    padding: 1rem;
   }
-  
+
   .enrolled-content h3 {
-    color: #0c4a6e;
-    font-size: 1.25rem;
-    font-weight: 600;
-    line-height: 1.4;
-    margin: 0;
-  }
-  
-  .course-type {
-    display: inline-block;
-    background: #0369a1;
-    color: #0369a1;
-    padding: 0.25rem 0.75rem;
-    border-radius: 20px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    align-self: flex-start;
-  }
-  
-  .overview {
-    color: #64748b;
-    font-size: 0.9rem;
-    line-height: 1.5;
-    margin: 0;
-    flex: 1;
-  }
-  
-  .enrolled-date {
-    color: #475569;
-    font-size: 0.85rem;
-    font-weight: 500;
-    margin: 0;
-    padding-top: 0.5rem;
-    border-top: 1px solid #f1f5f9;
-  }
-  
-  /* Status Messages */
-  .status-text, .error-text {
-    text-align: center;
-    padding: 3rem 2rem;
     font-size: 1.1rem;
-    border-radius: 12px;
-    margin: 2rem 0;
   }
-  
-  .status-text {
-    background: #f0f9ff;
-    color: #0369a1;
-    border: 1px solid #bae6fd;
-  }
-  
-  .error-text {
-    background: #fef2f2;
-    color: #dc2626;
-    border: 1px solid #fecaca;
-  }
-  
-  /* Responsive Design */
-  @media (max-width: 768px) {
-    .enrolled-container {
-      padding: 1rem;
-    }
-    
-    .enrolled-container h2 {
-      font-size: 1.75rem;
-    }
-    
-    .section-block {
-      padding: 1.5rem;
-      margin-bottom: 2rem;
-    }
-    
-    .enrolled-grid {
-      grid-template-columns: 1fr;
-      gap: 1rem;
-    }
-    
-    .enrolled-content {
-      padding: 1.25rem;
-    }
-  }
-  
-  @media (max-width: 480px) {
-    .enrolled-container {
-      padding: 0.75rem;
-    }
-    
-    .enrolled-container h2 {
-      font-size: 1.5rem;
-    }
-    
-    .section-block {
-      padding: 1rem;
-    }
-    
-    .enrolled-cover {
-      height: 180px;
-    }
-  }
-  
-  /* Loading Animation */
-  @keyframes pulse {
-    0% {
-      opacity: 1;
-    }
-    50% {
-      opacity: 0.5;
-    }
-    100% {
-      opacity: 1;
-    }
-  }
-  
-  .status-text:empty::before {
-    content: "Loading...";
-    animation: pulse 2s infinite;
-  }
-  
-  /* Custom Scrollbar for Webkit browsers */
-  .enrolled-grid::-webkit-scrollbar {
-    width: 6px;
-  }
-  
-  .enrolled-grid::-webkit-scrollbar-track {
-    background: #f1f5f9;
-    border-radius: 3px;
-  }
-  
-  .enrolled-grid::-webkit-scrollbar-thumb {
-    background: #bae6fd;
-    border-radius: 3px;
-  }
-  
-  .enrolled-grid::-webkit-scrollbar-thumb:hover {
-    background: #7dd3fc;
-  }
-  
-  /* Focus states for accessibility */
-  .enrolled-card:focus {
-    outline: 2px solid #0369a1;
-    outline-offset: 2px;
-  }
-  
-  /* Empty state styling */
-  .enrolled-container p:only-child {
-    text-align: center;
-    color: #64748b;
-    font-style: italic;
+}
+
+@media (max-width: 480px) {
+  .enrolled-container {
+    padding: 0.5rem;
   }
 
-  /* theme */
-
-  :root {
-    /* Light Theme - Sky Blue & White */
-    --bg-primary: #ffffff;
-    --bg-secondary: #f0f9ff;
-    --bg-tertiary: #e0f2fe;
-    --text-primary: #0c4a6e;
-    --text-secondary: #0369a1;
-    --text-tertiary: #0284c7;
-    --border-color: #bae6fd;
-    --shadow: 0 4px 6px -1px rgba(2, 132, 199, 0.1), 0 2px 4px -1px rgba(2, 132, 199, 0.06);
-    --shadow-hover: 0 20px 25px -5px rgba(2, 132, 199, 0.15), 0 10px 10px -5px rgba(2, 132, 199, 0.08);
-    --accent-primary: #0284c7;
-    --accent-primary-hover: #0369a1;
-    --accent-success: #0d9488;
-    --accent-success-hover: #0f766e;
-    --accent-warning: #d97706;
-    --accent-warning-hover: #b45309;
-    --accent-danger: #dc2626;
-    --accent-danger-hover: #b91c1c;
-    --modal-overlay: rgba(2, 132, 199, 0.3);
-    --gradient-primary: linear-gradient(135deg, #0284c7, #0ea5e9);
-    --gradient-success: linear-gradient(135deg, #0d9488, #14b8a6);
-    --gradient-text: linear-gradient(135deg, #0284c7, #0ea5e9, #38bdf8);
-  }
-  
-  /* Dark Theme - Deep Blue */
-  [data-theme="dark"] {
-    --bg-primary: #0c4a6e;
-    --bg-secondary: #082f49;
-    --bg-tertiary: #0a3a5c;
-    --text-primary: #f0f9ff;
-    --text-secondary: #bae6fd;
-    --text-tertiary: #7dd3fc;
-    --border-color: #0369a1;
-    --shadow: 0 4px 6px -1px rgba(8, 47, 73, 0.3), 0 2px 4px -1px rgba(8, 47, 73, 0.2);
-    --shadow-hover: 0 20px 25px -5px rgba(8, 47, 73, 0.4), 0 10px 10px -5px rgba(8, 47, 73, 0.3);
-    --accent-primary: #0ea5e9;
-    --accent-primary-hover: #38bdf8;
-    --accent-success: #2dd4bf;
-    --accent-success-hover: #5eead4;
-    --accent-warning: #f59e0b;
-    --accent-warning-hover: #fbbf24;
-    --accent-danger: #ef4444;
-    --accent-danger-hover: #f87171;
-    --modal-overlay: rgba(8, 47, 73, 0.8);
-    --gradient-primary: linear-gradient(135deg, #0ea5e9, #38bdf8);
-    --gradient-success: linear-gradient(135deg, #2dd4bf, #5eead4);
-    --gradient-text: linear-gradient(135deg, #7dd3fc, #38bdf8, #0ea5e9);
+  .enrolled-container h2 {
+    font-size: 1.3rem;
   }
 
-  [data-theme="dark"] .success-message {
-    background: linear-gradient(135deg, #1a2e1f, #1f3a25);
-    border-color: #166534;
+  .enrolled-cover {
+    height: 160px;
   }
+}
 
-  [data-theme="dark"] .success-text {
-    color: #bbf7d0;
+/* Loading Animation */
+@keyframes pulse {
+  0% {
+    opacity: 1;
   }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 1;
+  }
+}
 
-  [data-theme="dark"] .info-message {
-    background: linear-gradient(135deg, #1e2a3a, #233044);
-    border-color: #1e40af;
-  }
+.status-text:empty::before {
+  content: "Loading...";
+  animation: pulse 2s infinite;
+}
 
-  [data-theme="dark"] .info-text {
-    color: #bae6fd;
-  }
+/* Custom scrollbar for the container */
+.enrolled-container::-webkit-scrollbar {
+  width: 8px;
+}
 
-  .theme-toggle {
-    position: fixed;
-    bottom: 24px;
-    right: 24px;
-    z-index: 1000;
-  }
+.enrolled-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
 
-  .theme-toggle-btn {
-    background: var(--gradient-primary);
-    border: 2px solid var(--border-color);
-    border-radius: 50%;
-    width: 56px;
-    height: 56px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s ease;
-    box-shadow: var(--shadow);
-    color: white;
-  }
-  
-  .theme-toggle-btn:hover {
-    transform: translateY(-2px) scale(1.05);
-    box-shadow: var(--shadow-hover);
-    animation: float 2s ease-in-out infinite;
-  }
-  
-  .theme-toggle-btn svg {
-    width: 24px;
-    height: 24px;
-  }
+.enrolled-container::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.enrolled-container::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Bundle course specific styling */
+.enrolled-card .course-type[data-course-type="bundle"] {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.enrolled-card .course-type[data-course-type="single"] {
+  background: #d1ecf1;
+  color: #0c5460;
+}
+
+/* Add some interactive feedback */
+.enrolled-card:active {
+  transform: translateY(-2px);
+  transition: transform 0.1s ease;
+}

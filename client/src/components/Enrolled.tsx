@@ -92,8 +92,8 @@ export default function EnrolledCoursePage({ onLogout }: AppProps) {
     (item) => item.course?.course_type === "bundle"
   );
 
-  return (
-    <div style={{ display: "flex", minHeight: "100vh", }}>
+   return (
+    <div style={{ display: "flex", minHeight: "100vh",}}>
 
       {/* Main Section */}
       <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
@@ -102,11 +102,19 @@ export default function EnrolledCoursePage({ onLogout }: AppProps) {
           <h2>📚 My Enrolled Courses</h2>
 
           {loading ? (
-            <p className="status-text">Loading enrolled courses...</p>
+            <div className="status-text">
+              <div className="loading-spinner"></div>
+              Loading enrolled courses...
+            </div>
           ) : error ? (
-            <p className="error-text">{error}</p>
+            <p className="error-text">❌ {error}</p>
           ) : enrolled.length === 0 ? (
-            <p className="status-text">Belum ada course yang di-enroll.</p>
+            <div className="status-text">
+              <p>🎯 You haven't enrolled in any courses yet.</p>
+              <p style={{ fontSize: "1rem", marginTop: "0.5rem", opacity: "0.8" }}>
+                Explore our catalog to find interesting courses!
+              </p>
+            </div>
           ) : (
             <>
               {/* Bagian Single Courses */}
@@ -126,19 +134,25 @@ export default function EnrolledCoursePage({ onLogout }: AppProps) {
                           src={item.course?.cover || "/placeholder.jpg"}
                           alt={item.course?.title}
                           className="enrolled-cover"
+                          onError={(e) => {
+                            e.currentTarget.src = "/placeholder.jpg";
+                          }}
                         />
                         <div className="enrolled-content">
                           <h3>{item.course?.title || "Untitled Course"}</h3>
-                          <p className="course-type">
+                          <p 
+                            className="course-type"
+                            data-course-type={item.course?.course_type}
+                          >
                             {item.course?.course_type}
                           </p>
                           <p className="overview">
                             {item.course?.overview?.slice(0, 100) ||
-                              "Tidak ada deskripsi..."}
+                              "No description available..."}
                             ...
                           </p>
                           <p className="enrolled-date">
-                            Enrolled on:{" "}
+                            📅 Enrolled on:{" "}
                             {new Date(
                               item.enrolled_date
                             ).toLocaleDateString()}
@@ -167,19 +181,25 @@ export default function EnrolledCoursePage({ onLogout }: AppProps) {
                           src={item.course?.cover || "/placeholder.jpg"}
                           alt={item.course?.title}
                           className="enrolled-cover"
+                          onError={(e) => {
+                            e.currentTarget.src = "/placeholder.jpg";
+                          }}
                         />
                         <div className="enrolled-content">
                           <h3>{item.course?.title || "Untitled Bundle"}</h3>
-                          <p className="course-type">
+                          <p 
+                            className="course-type"
+                            data-course-type={item.course?.course_type}
+                          >
                             {item.course?.course_type}
                           </p>
                           <p className="overview">
                             {item.course?.overview?.slice(0, 100) ||
-                              "Tidak ada deskripsi..."}
+                              "No description available..."}
                             ...
                           </p>
                           <p className="enrolled-date">
-                            Enrolled on:{" "}
+                            📅 Enrolled on:{" "}
                             {new Date(
                               item.enrolled_date
                             ).toLocaleDateString()}
