@@ -1,11 +1,39 @@
 import React, { useState, useEffect } from "react";
-import { useLocation, Link } from "react-router-dom";
+import { useLocation, Link, useNavigate } from "react-router-dom";
 import "../../styles/sidebar.css";
+
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+}
 
 export default function Sidebar() {
   const location = useLocation();
-  const [activeMenu, setActiveMenu] = useState("/home");
+  const navigate = useNavigate();
 
+  const [activeMenu, setActiveMenu] = useState("/home");
+  const [user, setUser] = useState<User | null>(null);
+
+  // Middleware sederhana: ambil user dari localStorage
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (!storedUser) {
+      navigate("/login"); // redirect jika belum login
+    } else {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        setUser(parsedUser);
+      } catch (error) {
+        console.error("Gagal parsing data user:", error);
+        localStorage.removeItem("user");
+        navigate("/login");
+      }
+    }
+  }, [navigate]);
+
+  // Update menu aktif berdasarkan path URL
   useEffect(() => {
     setActiveMenu(location.pathname);
   }, [location.pathname]);
@@ -17,6 +45,7 @@ export default function Sidebar() {
       <h1>StudyBuddy</h1>
       <nav>
         <ul>
+          {/* Menu umum (semua role bisa lihat) */}
           <li>
             <Link
               to="/home"
@@ -26,42 +55,54 @@ export default function Sidebar() {
               Dashboard
             </Link>
           </li>
-          <li>
-            <Link
-              to="/enrolled"
-              className={isActive("/enrolled") ? "active" : ""}
-              onClick={() => setActiveMenu("/enrolled")}
-            >
-              Assignments
-            </Link>
-          </li>
-          <li>
-            <Link
-              to="/chart"
-              className={isActive("/chart") ? "active" : ""}
-              onClick={() => setActiveMenu("/chart")}
-            >
-              Keranjang
-            </Link>
-          </li>
-          <li>
-            <Link
-              to="/products"
-              className={isActive("/products") ? "active" : ""}
-              onClick={() => setActiveMenu("/products")}
-            >
-              Product
-            </Link>
-          </li>
-          <li>
-            <Link
-              to="/product-details"
-              className={isActive("/product-details") ? "active" : ""}
-              onClick={() => setActiveMenu("/product-details")}
-            >
-              Produk detail
-            </Link>
-          </li>
+
+          {/* Menu khusus Student */}
+          {user?.role === "student" && (
+            <>
+              <li>
+                <Link
+                  to="/enrolled"
+                  className={isActive("/enrolled") ? "active" : ""}
+                  onClick={() => setActiveMenu("/enrolled")}
+                >
+                  Assignments
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/chart"
+                  className={isActive("/chart") ? "active" : ""}
+                  onClick={() => setActiveMenu("/chart")}
+                >
+                  Keranjang
+                </Link>
+              </li>
+            </>
+          )}
+
+          {/* Menu khusus Instructor */}
+          {user?.role === "instructor" && (
+            <>
+              <li>
+                <Link
+                  to="/products"
+                  className={isActive("/products") ? "active" : ""}
+                  onClick={() => setActiveMenu("/products")}
+                >
+                  Product
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/product-details"
+                  className={isActive("/product-details") ? "active" : ""}
+                  onClick={() => setActiveMenu("/product-details")}
+                >
+                  Produk Detail
+                </Link>
+              </li>
+            </>
+          )}
         </ul>
       </nav>
     </aside>
