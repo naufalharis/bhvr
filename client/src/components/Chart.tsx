@@ -2,6 +2,8 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/chart.css";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { byPrefixAndName } from "../icons";
 
 interface OrderLine {
   id: string;
@@ -76,7 +78,8 @@ export default function OrderLines() {
       <div className="order-lines-main">
         <main className="order-lines-content">
           <div className="order-lines-header">
-            <span className="order-lines-icon">📦</span>
+            <span className="order-lines-icon"><FontAwesomeIcon icon={byPrefixAndName.fas.faCartShopping}/>
+            </span>
             <h2>Order Saya</h2>
           </div>
 

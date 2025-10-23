@@ -265,7 +265,7 @@
   /* Products Grid - 4 CARDS PER ROW */
   .products-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 1.5rem;
     padding: 1rem;
   }
@@ -322,13 +322,15 @@
     display: flex;
     flex-direction: column;
     flex-grow: 1;
+    gap: 0.1rem;
+    width: 300px;
   }
+  
   
   .product-title {
     font-size: 1.1rem;
     font-weight: 700;
     color: var(--text-primary);
-    margin-bottom: 0.5rem;
     line-height: 1.4;
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -444,6 +446,90 @@
     font-size: 1.1rem;
     margin-bottom: 1.5rem;
   }
+
+  
+  
+  .product-info-row {
+    display: flex;
+    align-items: flex-start; /* sejajarkan ke atas */
+    justify-content: space-between; /* rating kiri, badge kanan */
+    margin-top: 8px;
+  }
+  
+  .user-rating-section {
+    display: flex;
+    flex-direction: column; /* ubah arah jadi vertikal: label di atas, bintang di bawah */
+    align-items: flex-start;
+    gap: 4px; /* jarak antara label dan bintang */
+  }
+  
+  .user-rating-label {
+    font-size: 0.9rem;
+    color: var(--text-dark);
+    font-weight: 500;
+  }
+  
+  .user-rating-stars {
+    display: flex;
+    gap: 4px;
+  }
+  
+  .product-type-badge {
+    background: var(--primary-light);
+    color: var(--primary-dark);
+    padding: 0.4rem 0.8rem;
+    border-radius: 16px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 1px solid var(--primary-color);
+    white-space: nowrap;
+    margin-top: 4px; /* sedikit turun agar sejajar rapi */
+  }
+  
+  .product-footer {
+    display: flex;
+    justify-content: space-between; /* harga kiri, tombol kanan */
+    align-items: center; /* sejajarkan vertikal */
+    margin-top: 12px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border-color);
+  }
+  
+  .price-section {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .current-price {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--primary-dark);
+  }
+  
+  .original-price {
+    font-size: 0.9rem;
+    color: var(--text-light);
+    text-decoration: line-through;
+  }
+  
+  .quick-order-btn {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease-in-out;
+  }
+  
+  .quick-order-btn:hover {
+    background: var(--primary-dark);
+  }
+  
   
   .clear-filters-button {
     background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));

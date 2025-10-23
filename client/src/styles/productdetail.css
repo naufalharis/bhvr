@@ -78,6 +78,7 @@
     align-items: center;
     margin-bottom: 3rem;
     padding: 0 1rem;
+    gap: 10rem;
   }
   
   .section-header h2 {

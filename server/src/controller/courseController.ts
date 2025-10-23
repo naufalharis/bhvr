@@ -323,3 +323,44 @@ export const deleteContent = async (c: Context) => {
     return c.json({ error: error.message || "Internal server error" }, 500);
   }
 };
+
+
+// =======================
+//  Get Chapters for Dropdown
+// =======================
+export const getChaptersForDropdown = async (c: Context) => {
+  try {
+    const courseId = c.req.param("courseId");
+    if (!courseId) return c.json({ error: "courseId is required" }, 400);
+
+    // Ambil semua chapter dari course tersebut
+    const chapters = await prisma.courseChapter.findMany({
+      where: { course_id: courseId },
+      orderBy: { sort_order: "asc" },
+      include: {
+        contents: {
+          orderBy: { sort_order: "asc" },
+          select: {
+            id: true,
+            title: true,
+            overview: true,
+            content_type: true,
+            path: true,
+            original_file_name: true,
+            sort_order: true,
+          },
+        },
+      },
+    });
+
+    // Jika tidak ada chapter
+    if (chapters.length === 0) {
+      return c.json({ message: "No chapters found for this course", chapters: [] }, 200);
+    }
+
+    return c.json({ message: "Chapters fetched successfully", chapters }, 200);
+  } catch (error: any) {
+    console.error("getChaptersForDropdown error:", error);
+    return c.json({ error: error.message || "Failed to fetch chapters" }, 500);
+  }
+};

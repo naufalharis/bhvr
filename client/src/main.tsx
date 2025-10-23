@@ -10,7 +10,7 @@ import {
   useParams,
 } from "react-router-dom";
 
-import Login from "./components/login";
+import Login from "./components/Login";
 import Home from "./components/Home";
 import Register from "./components/Register";
 import Chapter from "./components/Chapter";
@@ -61,7 +61,7 @@ function App() {
 
   // ✅ Komponen wrapper yang sederhana
   const ChapterContentsWithParams = () => {
-    const { chapterId } = useParams<{ chapterId: string }>();
+    const { courseId, chapterId } = useParams<{ courseId: string, chapterId: string }>();
     return chapterId ? <ChapterContents chapterId={chapterId} /> : <div>Chapter ID is missing</div>;
   };
 
@@ -165,7 +165,7 @@ function App() {
       />
 
       <Route
-        path="/chapter/:chapterId/contents"
+        path="/chapter/:courseId/:chapterId/contents"
         element={
           isLoggedIn ? (
             <ProtectedLayout onLogout={handleLogout}>

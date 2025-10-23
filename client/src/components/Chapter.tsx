@@ -47,7 +47,7 @@ export default function Chapter() {
   const getToken = () => localStorage.getItem("token");
 
   // Fetch course by slug first to get course ID
-  const fetchCourseBySlug = async () => {
+  const fetchCourseBySlug = async (): Promise<Course | null> => {
     if (!courseSlug) return null;
     try {
       const token = getToken();
@@ -61,7 +61,7 @@ export default function Chapter() {
         });
         if (!res2.ok) throw new Error("Course not found");
         const data = await res2.json();
-        return Array.isArray(data) ? data.find(c => c.slug === courseSlug) : data;
+        return Array.isArray(data) ? data.find((c: Course) => c.slug === courseSlug) : data;
       }
       const data = await res.json();
       return data.course || data.data || data;
@@ -134,7 +134,7 @@ export default function Chapter() {
       }
     }
     fetchChapters();
-    // eslint-disable-next-line
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [courseSlug]);
 
   // Reset form
@@ -219,7 +219,7 @@ export default function Chapter() {
 
   const submitToServer = async (body: any) => {
     const token = getToken();
-    let res;
+    let res: Response | undefined;
     let data;
 
     try {
@@ -235,13 +235,13 @@ export default function Chapter() {
         });
       } else {
         // Create new chapter - try different endpoints
-        let endpoints = [
+        const endpoints = [
           `/api/courses/${course?.id}/chapters`,
           `/api/chapters`,
           `/api/chapters/create`
         ];
 
-        let lastError = null;
+        let lastError: any = null;
 
         for (const endpoint of endpoints) {
           try {
@@ -340,8 +340,8 @@ export default function Chapter() {
   };
 
   // Navigasi ke ChapterContents saat card diklik
-  const handleCardClick = (chapterId: string) => {
-    navigate(`/chapter/${chapterId}/contents`);
+  const handleCardClick = (courseId: string,chapterId: string) => {;
+    navigate(`/chapter/${courseId}/${chapterId}/contents`);
   };
 
   // Handle back button click
@@ -352,7 +352,6 @@ export default function Chapter() {
   return (
     <div className="app">
       <div className="main">
-
         <main className="chapter-page">
           <div className="chapter-header">
             <div className="header-title-container">
@@ -398,7 +397,7 @@ export default function Chapter() {
                   <div
                     key={chapter.id}
                     className="chapter-card"
-                    onClick={() => handleCardClick(chapter.id)}
+                    onClick={() => handleCardClick(chapter.course_id || '', chapter.id)}
                   >
                     <div className="chapter-content">
                       <h3>{chapter.title}</h3>
@@ -428,7 +427,7 @@ export default function Chapter() {
                           }}
                           disabled={loading}
                         >
-                          ✏️ Edit
+                          ✏ Edit
                         </button>
                         <button
                           className="delete-btn"
@@ -438,7 +437,7 @@ export default function Chapter() {
                           }}
                           disabled={loading}
                         >
-                          🗑️ Delete
+                          🗑 Delete
                         </button>
                       </div>
                     )}

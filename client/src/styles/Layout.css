@@ -13,6 +13,11 @@
   transition: margin-left 0.3s ease;
 }
 
+/* Saat di halaman chapter (sidebar hilang) */
+.main-content.full-width {
+  margin-left: 0; 
+}
+
 .content-area {
   flex: 1;
   padding: 0;

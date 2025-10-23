@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, Link, useNavigate } from "react-router-dom";
 import "../../styles/sidebar.css";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { byPrefixAndName } from "../../icons";
 
 interface User {
   id: string;
@@ -42,7 +44,7 @@ export default function Sidebar() {
 
   return (
     <aside className="sidebar">
-      <h1>StudyBuddy</h1>
+      <h1><FontAwesomeIcon icon={byPrefixAndName.fas.faBook} /> StudyBuddy</h1>
       <nav>
         <ul>
           {/* Menu umum (semua role bisa lihat) */}

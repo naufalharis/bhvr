@@ -1,237 +1,491 @@
-/* enrolled.css */
+/* src/styles/enrolled.css */
 
+/* Variabel CSS untuk Tema */
+:root {
+  /* Tema Terang (Default) */
+  --primary-color: #3b82f6;
+  --primary-light: #60a5fa;
+  --primary-dark: #2563eb;
+  --background-color: #f8fafc;
+  --surface-color: #ffffff;
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+  --border-color: #e2e8f0;
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --gradient-primary: linear-gradient(135deg, #3b82f6, #60a5fa);
+  --progress-bg: #e2e8f0;
+  --progress-fill: #3b82f6;
+  --success-color: #10b981;
+  --warning-color: #f59e0b;
+}
+
+/* Tema Gelap */
+[data-theme="dark"] {
+  --background-color: #0f172a;
+  --surface-color: #1e293b;
+  --text-primary: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --text-muted: #64748b;
+  --border-color: #334155;
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+  --shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+  --progress-bg: #334155;
+  --progress-fill: #60a5fa;
+  --success-color: #34d399;
+  --warning-color: #fbbf24;
+}
+
+/* Tema Default Device */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --background-color: #0f172a;
+    --surface-color: #1e293b;
+    --text-primary: #f1f5f9;
+    --text-secondary: #cbd5e1;
+    --text-muted: #64748b;
+    --border-color: #334155;
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+    --shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+    --progress-bg: #334155;
+    --progress-fill: #60a5fa;
+    --success-color: #34d399;
+    --warning-color: #fbbf24;
+  }
+}
+
+/* Container Styles */
 .enrolled-container {
-  max-width: 1200px;
+  min-width: 1070px;
+  min-height: 100vh;
+  margin: 0 auto;
   padding: 2rem;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: var(--background-color);
+  color: var(--text-primary);
+  transition: all 0.3s ease;
 }
 
 .enrolled-container h2 {
-  color: #2c3e50;
   font-size: 2rem;
   margin-bottom: 2rem;
-  font-weight: 600;
-  border-bottom: 3px solid #3498db;
-  padding-bottom: 0.5rem;
-  display: inline-block;
+  color: var(--primary-color);
+  text-align: center;
 }
 
 /* Section Styles */
 .section-block {
   margin-bottom: 3rem;
+  animation: fadeInUp 0.6s ease-out;
 }
 
 .section-title {
-  color: #34495e;
   font-size: 1.5rem;
   margin-bottom: 1.5rem;
-  font-weight: 600;
-  padding-left: 0.5rem;
-  border-left: 4px solid #e74c3c;
+  color: var(--primary-color);
+  border-bottom: 2px solid var(--border-color);
+  padding-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
 }
 
-/* Grid Layout */
+.section-title svg {
+  color: var(--primary-color);
+}
+
+/* Grid Layout - Single Column */
 .enrolled-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  display: flex;
+  flex-direction: column;
   gap: 1.5rem;
-  margin-bottom: 2rem;
 }
 
-/* Course Card */
+/* Card Styles */
 .enrolled-card {
-  background: white;
+  display: flex;
+  background: var(--surface-color);
   border-radius: 12px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  box-shadow: var(--shadow);
   transition: all 0.3s ease;
   cursor: pointer;
-  overflow: hidden;
-  border: 1px solid #e1e8ed;
+  border: 1px solid var(--border-color);
+  position: relative;
 }
 
 .enrolled-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-  border-color: #3498db;
+  box-shadow: var(--shadow-hover);
+  border-color: var(--primary-light);
 }
 
+.enrolled-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--gradient-primary);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.enrolled-card:hover::before {
+  opacity: 1;
+}
+
+/* Cover Image */
 .enrolled-cover {
-  width: 100%;
+  width: 270px;
   height: 200px;
   object-fit: cover;
-  border-bottom: 1px solid #e1e8ed;
+  flex-shrink: 0;
+  border-right: 1px solid var(--border-color);
+  transition: transform 0.3s ease;
 }
 
+.enrolled-card:hover .enrolled-cover {
+  transform: scale(1.05);
+}
+
+/* Card Content */
 .enrolled-content {
   padding: 1.5rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .enrolled-content h3 {
-  color: #2c3e50;
-  font-size: 1.2rem;
-  margin-bottom: 0.5rem;
-  font-weight: 600;
+  font-size: 1.25rem;
+  margin: 0;
+  color: var(--text-primary);
   line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
+/* Course Type Badge */
 .course-type {
   display: inline-block;
-  background: #ecf0f1;
-  color: #7f8c8d;
-  padding: 0.3rem 0.8rem;
+  padding: 0.25rem 0.75rem;
   border-radius: 20px;
   font-size: 0.8rem;
-  font-weight: 500;
-  margin-bottom: 1rem;
+  font-weight: 600;
   text-transform: capitalize;
+  align-self: flex-start;
 }
 
+.course-type[data-course-type="single"] {
+  background: linear-gradient(135deg, var(--success-color), #34d399);
+  color: white;
+  width: 65px;
+}
+
+.course-type[data-course-type="bundle"] {
+  background: linear-gradient(135deg, var(--warning-color), #fbbf24);
+  color: white;
+  width: 70px;
+}
+
+/* Course Overview */
 .overview {
-  color: #5d6d7e;
-  font-size: 0.95rem;
+  color: var(--text-secondary);
   line-height: 1.5;
-  margin-bottom: 1rem;
+  margin: 0.5rem 0;
+  flex: 1;
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
-.enrolled-date {
-  color: #7f8c8d;
-  font-size: 0.85rem;
-  font-weight: 500;
+/* Course Metadata */
+.course-metadata {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.enrolled-date,
+.chapters-count {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.enrolled-date svg,
+.chapters-count svg {
+  width: 14px;
+  color: var(--primary-color);
+}
+
+/* Progress Section */
+.course-progress-section {
+  padding: 1rem;
+  background: var(--background-color);
+  border-radius: 8px;
   margin-top: auto;
-  padding-top: 1rem;
-  border-top: 1px solid #ecf0f1;
+  border: 1px solid var(--border-color);
+}
+
+.progress-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.progress-text {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+.progress-count {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.progress-bar-container {
+  width: 100%;
+  height: 8px;
+  background-color: var(--progress-bg);
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: var(--gradient-primary);
+  border-radius: 10px;
+  transition: width 0.5s ease-in-out;
+  position: relative;
+}
+
+.progress-bar-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  animation: shimmer 2s infinite;
 }
 
 /* Status Messages */
 .status-text {
   text-align: center;
-  color: #7f8c8d;
+  padding: 3rem;
+  color: var(--text-secondary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
   font-size: 1.1rem;
-  margin: 3rem 0;
-  padding: 2rem;
-  background: #f8f9fa;
-  border-radius: 8px;
-  border-left: 4px solid #3498db;
 }
 
 .error-text {
   text-align: center;
-  color: #e74c3c;
-  font-size: 1.1rem;
-  margin: 3rem 0;
   padding: 2rem;
-  background: #fdeded;
+  color: #ef4444;
+  background-color: #fef2f2;
   border-radius: 8px;
-  border-left: 4px solid #e74c3c;
+  border: 1px solid #fecaca;
+  font-size: 1.1rem;
+  margin: 2rem;
 }
 
-/* Empty State */
-.enrolled-container .status-text {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  font-size: 1.2rem;
-  padding: 3rem;
-  border-radius: 12px;
-  margin: 2rem 0;
+/* Loading Spinner */
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--border-color);
+  border-top: 4px solid var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+/* Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes spin {
+  0% { 
+    transform: rotate(0deg); 
+  }
+  100% { 
+    transform: rotate(360deg); 
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 /* Responsive Design */
+@media (max-width: 1200px) {
+  .enrolled-container {
+    min-width: auto;
+    padding: 1.5rem;
+  }
+}
+
 @media (max-width: 768px) {
   .enrolled-container {
     padding: 1rem;
+    min-width: auto;
   }
 
   .enrolled-container h2 {
     font-size: 1.5rem;
-    margin-bottom: 1.5rem;
   }
 
-  .enrolled-grid {
-    grid-template-columns: 1fr;
-    gap: 1rem;
+  .enrolled-card {
+    flex-direction: column;
   }
 
-  .section-title {
-    font-size: 1.3rem;
+  .enrolled-cover {
+    width: 100%;
+    height: 200px;
+    border-right: none;
+    border-bottom: 1px solid var(--border-color);
   }
 
   .enrolled-content {
     padding: 1rem;
   }
 
-  .enrolled-content h3 {
-    font-size: 1.1rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .enrolled-container {
-    padding: 0.5rem;
-  }
-
-  .enrolled-container h2 {
+  .section-title {
     font-size: 1.3rem;
   }
 
+  .progress-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .enrolled-container {
+    min-width: auto;
+    padding: 1.5rem;
+  }
+  
+  .enrolled-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  
+  .enrolled-card {
+    flex-direction: row;
+  }
+  
   .enrolled-cover {
-    height: 160px;
+    width: 250px;
+    height: 200px;
   }
 }
 
-/* Loading Animation */
-@keyframes pulse {
-  0% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
-  100% {
-    opacity: 1;
+@media (min-width: 1025px) {
+  .enrolled-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
   }
 }
 
-.status-text:empty::before {
-  content: "Loading...";
-  animation: pulse 2s infinite;
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+  :root {
+    --border-color: #000000;
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.8);
+    --shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.8);
+  }
+  
+  .enrolled-card {
+    border: 2px solid var(--border-color);
+  }
 }
 
-/* Custom scrollbar for the container */
-.enrolled-container::-webkit-scrollbar {
-  width: 8px;
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  .enrolled-card,
+  .enrolled-cover,
+  .progress-bar-fill {
+    transition: none;
+    animation: none;
+  }
+  
+  .enrolled-card:hover {
+    transform: none;
+  }
+  
+  .progress-bar-fill::after {
+    animation: none;
+  }
 }
 
-.enrolled-container::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 4px;
-}
-
-.enrolled-container::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 4px;
-}
-
-.enrolled-container::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
-}
-
-/* Bundle course specific styling */
-.enrolled-card .course-type[data-course-type="bundle"] {
-  background: #fff3cd;
-  color: #856404;
-}
-
-.enrolled-card .course-type[data-course-type="single"] {
-  background: #d1ecf1;
-  color: #0c5460;
-}
-
-/* Add some interactive feedback */
-.enrolled-card:active {
-  transform: translateY(-2px);
-  transition: transform 0.1s ease;
+/* Print Styles */
+@media print {
+  .enrolled-container {
+    padding: 1rem;
+    background: white;
+    min-width: auto;
+  }
+  
+  .enrolled-card {
+    break-inside: avoid;
+    box-shadow: none;
+    border: 2px solid #000;
+    margin-bottom: 1.5rem;
+    flex-direction: row;
+  }
+  
+  .enrolled-card:hover {
+    transform: none;
+    box-shadow: none;
+  }
+  
+  .progress-bar-container {
+    background: #ccc !important;
+    border: 1px solid #000;
+  }
+  
+  .progress-bar-fill {
+    background: #000 !important;
+  }
+  
+  .enrolled-cover {
+    width: 200px;
+    height: 150px;
+  }
 }

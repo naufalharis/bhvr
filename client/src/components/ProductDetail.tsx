@@ -2,6 +2,8 @@
 import React, { useEffect, useState } from "react";
 import "../styles/productdetail.css";
 import { useNavigate } from "react-router-dom";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { byPrefixAndName } from "../icons";
 
 interface AppProps {
   onLogout: () => void;
@@ -385,7 +387,7 @@ export default function ProductDetailPage({ onLogout }: AppProps) {
                           onClick={() => handleDeleteProductDetail(detail.id)}
                           disabled={loading}
                         >
-                          🗑️ Remove
+                          <FontAwesomeIcon icon={byPrefixAndName.fas.faTrash}/>
                         </button>
                       </div>
                     </div>

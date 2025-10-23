@@ -2,6 +2,8 @@
 import React, { useEffect, useState } from "react";
 import "../styles/product.css";
 import { useNavigate } from "react-router-dom";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { byPrefixAndName } from "../icons";
 
 interface AppProps {
   onLogout: () => void;
@@ -350,13 +352,13 @@ export default function ProductPage({ onLogout }: AppProps) {
                             className="edit-btn"
                             onClick={() => handleEditProduct(product)}
                           >
-                            Edit
+                           <FontAwesomeIcon icon={byPrefixAndName.fas.faPenToSquare}></FontAwesomeIcon>
                           </button>
                           <button
                             className="delete-btn"
                             onClick={() => handleDeleteProduct(product.id)}
                           >
-                            Delete
+                            <FontAwesomeIcon icon={byPrefixAndName.fas.faTrash}></FontAwesomeIcon>
                           </button>
                         </div>
                       )}
