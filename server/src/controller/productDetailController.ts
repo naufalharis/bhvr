@@ -78,3 +78,4 @@ export const getProductDetails = async (c: Context) => {
     return c.json({ error: err.message }, 500);
   }
 };
+
